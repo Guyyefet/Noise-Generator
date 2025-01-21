@@ -1,4 +1,6 @@
-from noise_engine import NoiseEngine
+from audio_engine import AudioEngine
+from audio_stream import AudioStream
+from audio_parameter_observer import AudioParameterObserver
 from gui import NoiseGUI
 import signal
 import sys
@@ -13,19 +15,21 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
     
     try:
-        # Create the GUI (Subject)
+        # Create audio components
+        audio_engine = AudioEngine()
+        audio_stream = AudioStream(lambda x: None)  # Placeholder callback, will be set by observer
+        
+        # Create observer and connect it to audio components
+        audio_observer = AudioParameterObserver(audio_engine, audio_stream)
+        
+        # Create GUI and attach observer
         gui = NoiseGUI()
+        gui.attach(audio_observer)
         
-        # Create the noise engine (Observer)
-        noise_engine = NoiseEngine()
+        # Start audio processing
+        audio_observer.start()
         
-        # Attach noise engine as observer to GUI
-        gui.attach(noise_engine)
-        
-        # Start noise generation (in separate thread)
-        noise_engine.start()
-        
-        # Initial notification to set starting values
+        # Initial parameter notification
         gui.notify()
         
         # Show GUI (this will block until window is closed)
@@ -35,7 +39,7 @@ def main():
         print(f"Error: {e}")
     finally:
         # Cleanup
-        noise_engine.stop()
+        audio_observer.stop()
         gui.close()
 
 if __name__ == "__main__":
