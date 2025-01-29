@@ -3,24 +3,24 @@ from typing import List, Any
 
 class Observer(ABC):
     @abstractmethod
-    def update(self, *args: Any, **kwargs: Any) -> None:
+    def update(self, *args, **kwargs):
         """Receive updates from subject."""
         pass
 
 class Subject(ABC):
-    def __init__(self) -> None:
-        self._observers: List[Observer] = []
+    def __init__(self):
+        self.observers: List[Observer] = []
     
-    def attach(self, observer: Observer) -> None:
+    def attach(self, observer: Observer):
         """Attach an observer to the subject."""
-        if observer not in self._observers:
-            self._observers.append(observer)
+        if observer not in self.observers:
+            self.observers.append(observer)
     
-    def detach(self, observer: Observer) -> None:
+    def detach(self, observer: Observer):
         """Detach an observer from the subject."""
-        self._observers.remove(observer)
+        self.observers.remove(observer)
     
     @abstractmethod
-    def notify(self) -> None:
+    def notify(self):
         """Notify all observers about state changes."""
         pass

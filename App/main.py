@@ -14,6 +14,10 @@ def main():
     # Set up signal handling for graceful shutdown
     signal.signal(signal.SIGINT, signal_handler)
     
+    # Create GUI first
+    gui = NoiseGUI()
+    audio_observer = None
+    
     try:
         # Create audio components
         audio_engine = AudioEngine()
@@ -21,9 +25,6 @@ def main():
         
         # Create observer and connect it to audio components
         audio_observer = AudioParameterObserver(audio_engine, audio_stream)
-        
-        # Create GUI and attach observer
-        gui = NoiseGUI()
         gui.attach(audio_observer)
         
         # Start audio processing
@@ -38,9 +39,12 @@ def main():
     except Exception as e:
         print(f"Error: {e}")
     finally:
-        # Cleanup
-        audio_observer.stop()
-        gui.close()
+        # Cleanup audio if it was started
+        if audio_observer:
+            audio_observer.stop()
+        
+    # Always cleanup GUI
+    gui.close()
 
 if __name__ == "__main__":
     main()

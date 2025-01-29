@@ -13,20 +13,20 @@ class AudioParameterObserver(Observer):
             audio_engine: Component that generates audio
             audio_stream: Component that handles audio output
         """
-        self._audio_engine = audio_engine
-        self._audio_stream = audio_stream
+        self.audio_engine = audio_engine
+        self.audio_stream = audio_stream
         
         # Connect audio engine to stream
-        self._audio_stream._generate_audio = self._audio_engine.generate_noise
+        self.audio_stream.generate_audio = self.audio_engine.generate_noise
 
-    def update(self, color_param: float, volume: float) -> None:
+    def update(self, color_param: float, volume: float):
         """Update audio parameters when notified by GUI (Subject)."""
-        self._audio_engine.set_parameters(color_param, volume)
+        self.audio_engine.set_parameters(color_param, volume)
 
-    def start(self) -> None:
+    def start(self):
         """Start audio streaming."""
-        self._audio_stream.start()
+        self.audio_stream.start()
 
-    def stop(self) -> None:
+    def stop(self):
         """Stop audio streaming."""
-        self._audio_stream.stop()
+        self.audio_stream.stop()
