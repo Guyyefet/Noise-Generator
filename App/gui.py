@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 from observer import Subject, Observer
+from noise_parameters import NoiseParameters
 
 class NoiseGUI(Subject):
-    def __init__(self):
+    def __init__(self, parameters: NoiseParameters):
         super().__init__()  # Initialize Subject's observer list
+        self.parameters = parameters
         self.fig, self.ax = plt.subplots()  # Create basic figure
         self.sliders = []  # Initialize empty sliders list
         self._setup_figure()  # Configure figure
@@ -39,10 +41,9 @@ class NoiseGUI(Subject):
             self.sliders.append(slider)
 
     def notify(self, _ = None):
-        """Notify observers with current parameter values."""
+        """Update parameters when sliders change."""
         values = [slider.val for slider in self.sliders]
-        for observer in self.observers:
-            observer.update(*values)  # Pass all values as separate arguments
+        self.parameters.update_parameters(*values)
 
     def show(self):
         """Display the GUI."""

@@ -2,6 +2,7 @@ from audio_engine import AudioEngine
 from audio_stream import AudioStream
 from audio_parameter_observer import AudioParameterObserver
 from gui import NoiseGUI
+from noise_parameters import NoiseParameters
 import signal
 import sys
 
@@ -14,8 +15,9 @@ def main():
     # Set up signal handling for graceful shutdown
     signal.signal(signal.SIGINT, signal_handler)
     
-    # Create GUI first
-    gui = NoiseGUI()
+    # Create parameters and GUI
+    parameters = NoiseParameters()
+    gui = NoiseGUI(parameters)
     audio_observer = None
     
     try:
@@ -25,7 +27,7 @@ def main():
         
         # Create observer and connect it to audio components
         audio_observer = AudioParameterObserver(audio_engine, audio_stream)
-        gui.attach(audio_observer)
+        parameters.attach(audio_observer)
         
         # Start audio processing
         audio_observer.start()
