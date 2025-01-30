@@ -29,20 +29,14 @@ class AudioEngine:
         return seed & 0xFFFFFFFF
 
     def generate_noise(self, frames: int):
-        """Generate noise with Markov chain-like behavior."""
+        """Generate white noise using XOR shift."""
         noise = np.zeros(frames)
 
         for i in range(frames):
             self.seed = self._xor_shift(self.seed)
-            raw_value = (self.seed / 0x7FFFFFFF) - 1.0  # Normalize to range [-1, 1]
+            # Normalize to range [-1, 1] and apply pre-gain
+            noise[i] = ((self.seed / 0x7FFFFFFF) - 1.0) * 4.0
 
-            if i == 0:
-                noise[i] = raw_value  # Initial value (no previous state)
-            else:
-                # Markov chain influence: more influence with higher color_param
-                noise[i] = raw_value * self.color_param + noise[i - 1] * (1 - self.color_param)
-
-        # Apply volume
         # Apply bandpass filter
         filtered = self._apply_bandpass(noise)
         return filtered * self.volume
@@ -63,13 +57,20 @@ class AudioEngine:
         
         # High-pass filter with higher cutoff
         for i in range(len(x)):
+            # Apply high-pass with gain compensation
             hp[i] = high_alpha * (self.hp_prev_y + x[i] - self.hp_prev_x)
             self.hp_prev_y = hp[i]
             self.hp_prev_x = x[i]
+            # Increase high-pass gain compensation
+            hp[i] *= 4.0
         
         # Low-pass filter with lower cutoff
         for i in range(len(hp)):
+            # Apply low-pass with gain compensation
             lp[i] = (1 - low_alpha) * self.lp_prev_y + low_alpha * hp[i]
             self.lp_prev_y = lp[i]
+            # Increase low-pass gain compensation
+            lp[i] *= 4.0
         
-        return lp
+        # Clip to prevent any potential overflow
+        return np.clip(lp, -1.0, 1.0)

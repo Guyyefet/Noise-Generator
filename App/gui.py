@@ -20,7 +20,6 @@ class NoiseGUI(Subject):
         """Create and configure all sliders."""
         # Slider parameters: (label, min, max, initial value)
         slider_params = [
-            ("Color", 0.0, 1.0, 0.0),  # Color parameter (affects Markov chain behavior)
             ("Volume", 0.0, 1.0, 0.5),   # Volume control
             ("Filter cutoff", 0.0, 1.0, 0.5),  # Center frequency of bandpass
             ("Bandwidth", 0.0, 1.0, 0.5)   # Width of the bandpass filter
