@@ -1,6 +1,7 @@
-from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout
+from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout
 from new_gui import NoiseControlsWidget
 from noise_parameters import NoiseParameters
+from waveform_view import WaveformView
 
 class MainWindow(QMainWindow):
     """Main application window."""
@@ -13,10 +14,20 @@ class MainWindow(QMainWindow):
         # Create central widget and layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        layout = QVBoxLayout(central_widget)
+        main_layout = QHBoxLayout(central_widget)
+        
+        # Create left panel for controls
+        left_panel = QWidget()
+        left_layout = QVBoxLayout(left_panel)
         
         # Add noise controls
         controls = NoiseControlsWidget(parameters)
-        layout.addWidget(controls)
+        left_layout.addWidget(controls)
+        left_layout.addStretch()  # Push controls to top
         
-        # Future: Add visualization widget here
+        # Create waveform view
+        self.waveform_view = WaveformView()
+        
+        # Add widgets to main layout
+        main_layout.addWidget(left_panel, stretch=1)  # Controls take 1/4 of width
+        main_layout.addWidget(self.waveform_view, stretch=3)  # Waveform takes 3/4 of width

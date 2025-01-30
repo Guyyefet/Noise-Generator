@@ -48,4 +48,36 @@
 
 - maybe we should have better gain staging when the filter cutoff is low,
   the volume decrease quite abit there 
+- switch to QT lib for GUI and visualization
+
+### Architecture Changes:
+Split current NoiseGUI into separate components:
+NoiseParameters (Subject): Manages state and core logic
+NoiseGUI: Handles parameter controls (sliders)
+WaveformView: Handles visualization
+MainWindow: Composes all components together
+GUI Framework:
+Moving from matplotlib to Qt + pyqtgraph
+Better performance for real-time updates
+Native Qt integration
+More responsive visualization
+Observer Pattern:
+Keeping our current observer pattern for audio parameters
+NoiseParameters remains as Subject
+AudioParameterObserver stays unchanged
+Clean separation between GUI and audio logic
+Data Flow:
+User Input → NoiseGUI → NoiseParameters (Subject)
+                              ↓
+                    AudioParameterObserver
+                              ↓
+                        AudioEngine
+                              ↓
+                        WaveformView
+Benefits:
+Better separation of concerns
+Each class has a single responsibility
+More maintainable and testable
+Improved visualization performance
+Cleaner architecture overall
 

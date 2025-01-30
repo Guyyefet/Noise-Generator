@@ -10,14 +10,19 @@ from typing import Callable
 class AudioStream:
     """Handles real-time audio streaming with callback-based audio generation."""
     
-    def __init__(self, callback: Callable[[int], np.ndarray]):
+    def __init__(self, callback: Callable[[int], np.ndarray], waveform_view=None):
         """
         Initialize audio stream with callback function for audio generation.
+        
+        Args:
+            callback: Function that generates audio data
+            waveform_view: Optional WaveformView widget for visualization
         """
         self.generate_audio = callback
         self.stream = None
         self.stop_event = Event()
         self.audio_thread = None
+        self.waveform_view = waveform_view
         
     def audio_callback(self, outdata: np.ndarray, frames: int, time: float, status: sd.CallbackFlags):
         """
@@ -31,6 +36,10 @@ class AudioStream:
 
         audio_data = self.generate_audio(frames)
         outdata[:] = audio_data.reshape(-1, 1)
+        
+        # Update waveform if view is available
+        if self.waveform_view:
+            self.waveform_view.update_waveform(audio_data)
 
     def stream_thread(self):
         """
@@ -42,7 +51,8 @@ class AudioStream:
                 channels=1,
                 dtype="float32",
                 callback=self.audio_callback,
-                blocksize=1024,
+                blocksize=2048,  # Larger buffer for better performance
+                latency='high',  # Prefer stability over low latency
             ) as stream:
                 self.stream = stream
                 stream.start()

@@ -22,14 +22,17 @@ def main():
     # Create components
     parameters = NoiseParameters()
     audio_engine = AudioEngine()
-    audio_stream = AudioStream(lambda x: None)
+    
+    # Create and show main window first to have access to waveform view
+    window = MainWindow(parameters)
+    window.show()
+    
+    # Create audio stream with waveform view
+    audio_stream = AudioStream(lambda x: None, window.waveform_view)
     audio_observer = AudioParameterObserver(audio_engine, audio_stream)
     parameters.attach(audio_observer)
     
     try:
-        # Create and show main window
-        window = MainWindow(parameters)
-        window.show()
         
         # Start audio processing
         audio_observer.start()
