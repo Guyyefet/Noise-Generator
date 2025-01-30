@@ -21,6 +21,6 @@ class Subject(ABC):
         self.observers.remove(observer)
     
     @abstractmethod
-    def notify(self):
+    def notify(self, _ = None):
         """Notify all observers about state changes."""
         pass

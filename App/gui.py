@@ -12,7 +12,7 @@ class NoiseGUI(Subject):
 
     def _setup_figure(self):
         """Configure the matplotlib figure."""
-        plt.subplots_adjust(left=0.25, bottom=0.5)
+        plt.subplots_adjust(left=0.25, bottom=0.1)  # Reduced bottom margin since sliders moved up
         self.ax.set_title("Noise Generator Parameters")
         self.ax.axis("off")
 
@@ -21,11 +21,13 @@ class NoiseGUI(Subject):
         # Slider parameters: (label, min, max, initial value)
         slider_params = [
             ("Color", 0.0, 1.0, 0.0),  # Color parameter (affects Markov chain behavior)
-            ("Volume", 0.0, 1.0, 0.5)   # Volume control
+            ("Volume", 0.0, 1.0, 0.5),   # Volume control
+            ("Filter cutoff", 0.0, 1.0, 0.5),  # Center frequency of bandpass
+            ("Bandwidth", 0.0, 1.0, 0.5)   # Width of the bandpass filter
         ]
 
         for i, (label, valmin, valmax, valinit) in enumerate(slider_params):
-            ax_pos = [0.25, 0.25 - i*0.1, 0.65, 0.03]
+            ax_pos = [0.25, 0.45 - i*0.1, 0.65, 0.03]  # Moved sliders up by starting at 0.45
             slider = Slider(
                 plt.axes(ax_pos), 
                 label, 
@@ -37,7 +39,7 @@ class NoiseGUI(Subject):
             slider.on_changed(self.notify)
             self.sliders.append(slider)
 
-    def notify(self):
+    def notify(self, _ = None):
         """Notify observers with current parameter values."""
         values = [slider.val for slider in self.sliders]
         for observer in self.observers:
