@@ -34,8 +34,8 @@ class AudioEngine:
 
         for i in range(frames):
             self.seed = self._xor_shift(self.seed)
-            # Normalize to range [-1, 1] and apply pre-gain
-            noise[i] = ((self.seed / 0x7FFFFFFF) - 1.0) * 4.0
+            # Normalize to range [-1, 1]
+            noise[i] = (self.seed / 0x7FFFFFFF) - 1.0
 
         # Apply bandpass filter
         filtered = self._apply_bandpass(noise)
@@ -55,22 +55,21 @@ class AudioEngine:
         hp = np.zeros_like(x)
         lp = np.zeros_like(x)
         
-        # High-pass filter with higher cutoff
+        # High-pass filter
         for i in range(len(x)):
-            # Apply high-pass with gain compensation
-            hp[i] = high_alpha * (self.hp_prev_y + x[i] - self.hp_prev_x)
+            # y[n] = x[n] - x[n-1] + (1-alpha) * y[n-1]
+            hp[i] = x[i] - self.hp_prev_x + (1 - high_alpha) * self.hp_prev_y
             self.hp_prev_y = hp[i]
             self.hp_prev_x = x[i]
-            # Increase high-pass gain compensation
-            hp[i] *= 4.0
         
-        # Low-pass filter with lower cutoff
+        # Low-pass filter
         for i in range(len(hp)):
-            # Apply low-pass with gain compensation
-            lp[i] = (1 - low_alpha) * self.lp_prev_y + low_alpha * hp[i]
+            # y[n] = alpha * x[n] + (1-alpha) * y[n-1]
+            lp[i] = low_alpha * hp[i] + (1 - low_alpha) * self.lp_prev_y
             self.lp_prev_y = lp[i]
-            # Increase low-pass gain compensation
-            lp[i] *= 4.0
+        
+        # Single gain compensation stage
+        lp *= 1.5
         
         # Clip to prevent any potential overflow
         return np.clip(lp, -1.0, 1.0)
