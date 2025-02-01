@@ -12,7 +12,7 @@
 - Filter coefficients properly normalized for unity gain
 - High-pass: y[n] = x[n] - x[n-1] + (1-alpha) * y[n-1]
 - Low-pass: y[n] = alpha * x[n] + (1-alpha) * y[n-1]
-- Single gain compensation (1.5x) after filtering
+- Dynamic gain compensation based on bandwidth (1.0x to 1.5x)
 - Cutoff frequency and bandwidth controls
 
 ### Signal Chain
@@ -31,53 +31,20 @@
   - Native-looking controls
   - Easier component management
 
-### Visualization Plans
-1. Time Domain Plot
-   - Show waveform in real-time
-   - Display both pre and post-filter signals
-   - Help visualize filter effects
-
-2. Future Visualization Options
-   - Frequency Domain Plot (spectrum analysis)
-   - Spectrogram (time-frequency visualization)
-
-### Feature Ideas
+### Audio Engine Improvements
 - Re-enable colored noise with improved implementation
+- Improve low frequency response with either:
+  1. Frequency-dependent gain compensation:
+     - Add additional gain boost below 200Hz
+     - Scale boost inversely with frequency
+     - Pros: Simpler implementation, easier to tune
+     - Cons: May increase noise floor at low frequencies
+  
+  2. Logarithmic filter coefficient mapping:
+     - Replace linear cutoff-to-alpha mapping with logarithmic scale
+     - Implement gentler high-pass filter slope
+     - Pros: More natural frequency response, better precision at low frequencies
+     - Cons: Requires significant filter implementation changes
 
 ### TODO
-
-- maybe we should have better gain staging when the filter cutoff is low,
-  the volume decrease quite abit there 
-- switch to QT lib for GUI and visualization
-
-### Architecture Changes:
-Split current NoiseGUI into separate components:
-NoiseParameters (Subject): Manages state and core logic
-NoiseGUI: Handles parameter controls (sliders)
-WaveformView: Handles visualization
-MainWindow: Composes all components together
-GUI Framework:
-Moving from matplotlib to Qt + pyqtgraph
-Better performance for real-time updates
-Native Qt integration
-More responsive visualization
-Observer Pattern:
-Keeping our current observer pattern for audio parameters
-NoiseParameters remains as Subject
-AudioParameterObserver stays unchanged
-Clean separation between GUI and audio logic
-Data Flow:
-User Input → NoiseGUI → NoiseParameters (Subject)
-                              ↓
-                    AudioParameterObserver
-                              ↓
-                        AudioEngine
-                              ↓
-                        WaveformView
-Benefits:
-Better separation of concerns
-Each class has a single responsibility
-More maintainable and testable
-Improved visualization performance
-Cleaner architecture overall
 

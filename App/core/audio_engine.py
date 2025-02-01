@@ -68,8 +68,11 @@ class AudioEngine:
             lp[i] = low_alpha * hp[i] + (1 - low_alpha) * self.lp_prev_y
             self.lp_prev_y = lp[i]
         
-        # Single gain compensation stage
-        lp *= 1.5
+        # Dynamic gain compensation based on bandwidth
+        # When bandwidth is narrow (close to 0), we reduce gain compensation
+        # When bandwidth is wide (close to 1), we maintain the original 1.5x gain
+        gain_compensation = 1.0 + (0.5 * self.bandwidth)
+        lp *= gain_compensation
         
         # Clip to prevent any potential overflow
         return np.clip(lp, -1.0, 1.0)
