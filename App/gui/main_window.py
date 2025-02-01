@@ -25,8 +25,9 @@ class MainWindow(QMainWindow):
         left_layout.addWidget(controls)
         left_layout.addStretch()  # Push controls to top
         
-        # Create waveform view
+        # Create waveform view and register as observer
         self.waveform_view = WaveformView()
+        parameters.attach(self.waveform_view)
         
         # Add widgets to main layout
         main_layout.addWidget(left_panel, stretch=1)  # Controls take 1/4 of width

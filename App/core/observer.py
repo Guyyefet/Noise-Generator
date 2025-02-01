@@ -1,13 +1,11 @@
-from abc import ABC, abstractmethod
 from typing import List, Any
 
-class Observer(ABC):
-    @abstractmethod
+class Observer:
     def update(self, *args, **kwargs):
         """Receive updates from subject."""
         pass
 
-class Subject(ABC):
+class Subject:
     def __init__(self):
         self.observers: List[Observer] = []
     
@@ -20,7 +18,7 @@ class Subject(ABC):
         """Detach an observer from the subject."""
         self.observers.remove(observer)
     
-    @abstractmethod
     def notify(self, _ = None):
         """Notify all observers about state changes."""
-        pass
+        for observer in self.observers:
+            observer.update()
