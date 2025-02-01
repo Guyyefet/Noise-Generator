@@ -38,38 +38,58 @@ class WaveformView(QWidget, Observer):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         
-        # Create plot widget
+        # Create plot widget with dark theme
         self.plot_widget = pg.PlotWidget()
-        self.plot_widget.setBackground('w')
+        self.plot_widget.setBackground('#2b2b2b')
         self.plot_widget.setMouseEnabled(x=False, y=False)
         self.plot_widget.getViewBox().setMenuEnabled(False)
         
-        # Set up axis labels and ranges
-        self.plot_widget.setLabel('left', 'Amplitude (dB)')
-        self.plot_widget.setLabel('bottom', 'Frequency (Hz)')
+        # Set up axis labels and ranges with custom style
+        label_style = {'color': '#8f8f8f', 'font-size': '10pt'}
+        self.plot_widget.setLabel('left', 'dB', **label_style)
+        self.plot_widget.setLabel('bottom', 'Hz', **label_style)
         
         # Configure frequency axis (logarithmic)
-        freq_ticks = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000]
+        major_freqs = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000]
+        minor_freqs = []
+        for i in range(len(major_freqs)-1):
+            f1, f2 = major_freqs[i], major_freqs[i+1]
+            if f2/f1 > 2:
+                minor_freqs.extend([f1*1.5, f1*2, f1*3, f1*4])
+        
         x_axis = self.plot_widget.getAxis('bottom')
-        x_axis.setTicks([[(np.log10(f), str(f)) for f in freq_ticks]])
+        major_ticks = [(np.log10(f), str(f) if f < 1000 else f'{f//1000}k') for f in major_freqs]
+        minor_ticks = [(np.log10(f), '') for f in minor_freqs]
+        x_axis.setTicks([major_ticks, minor_ticks])
         self.plot_widget.setLogMode(x=True, y=False)
         self.plot_widget.setXRange(np.log10(20), np.log10(20000))
         
         # Configure amplitude axis
         y_axis = self.plot_widget.getAxis('left')
-        y_ticks = [-60, -48, -36, -24, -12, 0]
-        y_axis.setTicks([[(v, str(v)) for v in y_ticks]])
-        self.plot_widget.setYRange(-60, 0)
+        major_dbs = [-60, -48, -36, -24, -12, 0, 6, 12, 24]
+        minor_dbs = [-54, -42, -30, -18, -6, 3, 12]
+        major_ticks = [(db, str(db)) for db in major_dbs]
+        minor_ticks = [(db, '') for db in minor_dbs]
+        y_axis.setTicks([major_ticks, minor_ticks])
+        self.plot_widget.setYRange(-60, 24)
         
-        # Configure grid
-        self.plot_widget.showGrid(x=True, y=True, alpha=0.3)
+        # Configure grid with major and minor lines
+        self.plot_widget.showGrid(x=True, y=True, alpha=0.2)
         
-        # Create spectrum curve
-        pen = pg.mkPen(color='b', width=2)
+        # Add minor grid lines
+        for freq in minor_freqs:
+            line = pg.InfiniteLine(angle=90, pos=np.log10(freq), pen=pg.mkPen('#3f3f3f', width=0.5))
+            self.plot_widget.addItem(line)
+        for db in minor_dbs:
+            line = pg.InfiniteLine(angle=0, pos=db, pen=pg.mkPen('#3f3f3f', width=0.5))
+            self.plot_widget.addItem(line)
+        
+        # Create spectrum curve with blue color
+        pen = pg.mkPen(color='#4a9eff', width=2)
         self.spectrum_curve = self.plot_widget.plot(pen=pen)
         
-        # Create filter response curve with thicker line
-        filter_pen = pg.mkPen(color='r', width=3, dash=[8,4])
+        # Create filter response curve with red color
+        filter_pen = pg.mkPen(color='#ff4a4a', width=3)
         self.filter_curve = self.plot_widget.plot(pen=filter_pen)
         
         layout.addWidget(self.plot_widget)
@@ -92,9 +112,15 @@ class WaveformView(QWidget, Observer):
         """Update from NoiseParameters (Observer pattern)."""
         if len(args) == 3:  # volume, cutoff, bandwidth
             volume, cutoff, bandwidth = args
-            # Convert normalized cutoff (0-1) to frequency (20Hz-20kHz)
-            self.cutoff_freq = 20 * (20000/20)**(cutoff)
-            self.q_factor = 0.1 + bandwidth * 2.9  # Map 0-1 to Q range 0.1-3.0
+            
+            # Map cutoff from 0-1 to center frequency (20Hz-20kHz)
+            self.center_freq = 20 * (20000/20)**cutoff
+            
+            # Map bandwidth to octave spread
+            min_spread = 0.5  # minimum 1/2 octave
+            max_spread = 4.0  # maximum 4 octaves
+            self.octave_spread = min_spread + bandwidth * (max_spread - min_spread)
+            
             self._update_filter_response()
     
     def _update_filter_response(self):
@@ -102,12 +128,15 @@ class WaveformView(QWidget, Observer):
         # Generate frequency response points
         freqs = np.logspace(np.log10(20), np.log10(20000), 1000)
         
-        # Simple lowpass filter response (butterworth approximation)
-        response = 1 / np.sqrt(1 + (freqs/self.cutoff_freq)**(2*2))
+        # Calculate bandpass response in octaves
+        octaves_from_center = np.abs(np.log2(freqs/self.center_freq))
         
-        # Convert to dB and apply window
-        response_db = 20 * np.log10(np.clip(response, 1e-3, None))
-        response_db = np.clip(response_db, -60, 0)
+        # Create smooth bandpass shape with steeper falloff
+        response = np.exp(-2.0 * (octaves_from_center/self.octave_spread)**2)
+        
+        # Convert to dB with proper range (+6dB peak)
+        response_db = 6 - 12 * (1 - response)  # Peak at +6dB, min at -60dB
+        response_db = np.clip(response_db, -60, 24)
         
         # Update filter curve
         self.filter_curve.setData(freqs, response_db)
@@ -124,8 +153,8 @@ class WaveformView(QWidget, Observer):
             
             # Convert to dB with proper scaling and smoothing
             fft_smoothed = np.convolve(fft, np.hanning(5)/5, mode='same')  # Smooth the spectrum
-            fft_db = 20 * np.log10(np.clip(fft_smoothed / len(fft), 1e-3, None))
-            fft_db = np.clip(fft_db, -60, 0)
+            fft_db = 20 * np.log10(np.clip(fft_smoothed * 2, 1e-3, None))  # *2 to match RMS scaling
+            fft_db = np.clip(fft_db, -60, 24)  # Allow peaks up to +6dB
             
             # Update spectrum curve (skip DC and nyquist)
             valid_freqs = (self.freq_data > 20) & (self.freq_data < 20000)
