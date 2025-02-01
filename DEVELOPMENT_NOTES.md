@@ -15,6 +15,15 @@
   - Easy to extend with new noise types
   - Clean separation of concerns
 
+### Code Organization
+- App/core/strategies/
+  - noise/        # Noise generation strategies
+    - base.py     # Base noise generator interface
+    - xorshift.py # XOR shift implementation
+  - filters/      # Audio filter strategies
+    - base.py     # Base filter interface
+    - bandpass.py # Bandpass filter implementation
+
 ### Core Components
 - NoiseGenerator (Strategy):
   - Abstract base class for noise generation

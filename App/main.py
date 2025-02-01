@@ -1,4 +1,4 @@
-from core.audio_engine import AudioEngine
+from core.audio_engine import BandpassAudioEngine
 from core.audio_stream import AudioStream
 from core.audio_parameter_observer import AudioParameterObserver
 from core.noise_parameters import NoiseParameters
@@ -21,7 +21,7 @@ def main():
     
     # Create components
     parameters = NoiseParameters()
-    audio_engine = AudioEngine()
+    audio_engine = BandpassAudioEngine()  # Default to bandpass engine for now
     
     # Create and show main window first to have access to waveform view
     window = MainWindow(parameters)

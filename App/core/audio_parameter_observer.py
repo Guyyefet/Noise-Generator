@@ -1,11 +1,11 @@
 from core.observer import Observer
-from core.audio_engine import AudioEngine
+from core.audio_engine import AudioEngineBase
 from core.audio_stream import AudioStream
 
 class AudioParameterObserver(Observer):
     """Observes GUI parameter changes and coordinates audio components."""
     
-    def __init__(self, audio_engine: AudioEngine, audio_stream: AudioStream):
+    def __init__(self, audio_engine: AudioEngineBase, audio_stream: AudioStream):
         """
         Initialize with audio components.
         

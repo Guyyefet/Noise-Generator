@@ -1,7 +1,7 @@
 import numpy as np
-from .base import NoiseEngineStrategy
-from .generators import XorShiftGenerator
+from ..noise.generators import XorShiftGenerator
 from .filters import BandpassFilter
+from ..base import NoiseEngineStrategy
 
 class BandpassStrategy(NoiseEngineStrategy):
     """Bandpass filtered noise generation strategy."""
