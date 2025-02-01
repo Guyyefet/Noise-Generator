@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout
-from new_gui import NoiseControlsWidget
-from noise_parameters import NoiseParameters
-from waveform_view import WaveformView
+from core.noise_parameters import NoiseParameters
+from gui.PyQt_gui import NoiseControlsWidget
+from gui.waveform_view import WaveformView
 
 class MainWindow(QMainWindow):
     """Main application window."""

@@ -1,4 +1,4 @@
-from observer import Subject
+from core.observer import Subject
 
 class NoiseParameters(Subject):
     """Manages noise generation parameters and notifies observers of changes."""

@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QSlider, QLabel
 from PyQt6.QtCore import Qt
-from noise_parameters import NoiseParameters
+from core.noise_parameters import NoiseParameters
 
 class NoiseControlsWidget(QWidget):
     """Widget containing noise parameter controls."""

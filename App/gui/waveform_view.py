@@ -28,13 +28,6 @@ class WaveformView(QWidget):
         # Flag for new data
         self.has_new_data = False
         
-        # # Peak level tracking
-        # self.peak_level = -60
-        # self.peak_decay = 0.5  # dB per update (faster decay)
-        # self.peak_hold_time = 1000  # Hold peak for 1 second
-        # self.peak_hold_timer = QTimer()
-        # self.peak_hold_timer.timeout.connect(self._reset_peak)
-        
         self._setup_ui()
     
     def _setup_ui(self):
@@ -42,14 +35,17 @@ class WaveformView(QWidget):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         
-        # Create plot widget
+        # Create plot widget with disabled interactions
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground('w')  # White background
+        self.plot_widget.setMouseEnabled(x=False, y=False)  # Disable mouse interactions
+        self.plot_widget.getViewBox().setMenuEnabled(False)  # Disable right-click menu
         
-        # Set up axis labels and ranges
+        # Set up axis labels and fixed ranges
         self.plot_widget.setLabel('left', 'Amplitude (dB)')
         self.plot_widget.setLabel('bottom', 'Time (ms)')
-        self.plot_widget.setYRange(-60, 0)  # -60dB to 0dB range
+        self.plot_widget.setYRange(-60, 0, padding=0)  # -60dB to 0dB range without padding
+        self.plot_widget.getViewBox().setLimits(xMin=0, yMin=-60, yMax=0)  # Lock axis limits
         
         # Configure grid with common dB intervals
         self.plot_widget.showGrid(x=True, y=True, alpha=0.3)
@@ -61,16 +57,9 @@ class WaveformView(QWidget):
         ms_per_sample = 1000 / 44100  # milliseconds per sample
         self.time_data = np.linspace(0, self.buffer_size * ms_per_sample, self.buffer_size)
         
-        # Create plot curves
+        # Create plot curve
         pen = pg.mkPen(color='b', width=2)
         self.curve = self.plot_widget.plot(pen=pen)
-        
-        # # Add peak level line
-        # peak_pen = pg.mkPen(color='r', width=2)
-        # self.peak_line = pg.InfiniteLine(pos=-60, angle=0, pen=peak_pen, 
-        #                                label='Peak: {value:.1f} dB',
-        #                                labelOpts={'position': 0.95, 'color': 'r', 'fill': 'w'})
-        # self.plot_widget.addItem(self.peak_line)
         
         # Create downsampled arrays
         self.display_size = self.buffer_size // self.downsample
@@ -102,15 +91,5 @@ class WaveformView(QWidget):
             db_data = 20 * np.log10(np.clip(np.abs(self.display_data), 1e-3, None))
             db_data = np.clip(db_data, -60, 0)
             
-            # Update curve
             self.curve.setData(self.display_time, db_data)
-            
-    #         # Update peak level with hold time
-    #         current_peak = np.max(db_data)
-    #         if current_peak > self.peak_level:
-    #             self.peak_level = current_peak
-    #             self.peak_hold_timer.start(self.peak_hold_time)
-    #         elif not self.peak_hold_timer.isActive():
-    #             self.peak_level = max(-60, self.peak_level - self.peak_decay)
-                
-    # def _reset_peak(self):
+            self.has_new_data = False

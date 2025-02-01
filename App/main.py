@@ -1,8 +1,8 @@
-from audio_engine import AudioEngine
-from audio_stream import AudioStream
-from audio_parameter_observer import AudioParameterObserver
-from noise_parameters import NoiseParameters
-from main_window import MainWindow
+from core.audio_engine import AudioEngine
+from core.audio_stream import AudioStream
+from core.audio_parameter_observer import AudioParameterObserver
+from core.noise_parameters import NoiseParameters
+from gui.main_window import MainWindow
 from PyQt6.QtWidgets import QApplication
 import signal
 import sys
