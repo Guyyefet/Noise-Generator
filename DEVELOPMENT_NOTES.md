@@ -12,7 +12,8 @@
 - Filter coefficients properly normalized for unity gain
 - High-pass: y[n] = x[n] - x[n-1] + (1-alpha) * y[n-1]
 - Low-pass: y[n] = alpha * x[n] + (1-alpha) * y[n-1]
-- Dynamic gain compensation based on bandwidth (1.0x to 1.5x)
+- Base gain (1.5x) with small bandwidth-dependent boost
+- Narrow bandwidth gets slightly more gain (+0.2x)
 - Cutoff frequency and bandwidth controls
 
 ### Signal Chain
@@ -47,4 +48,3 @@
      - Cons: Requires significant filter implementation changes
 
 ### TODO
-

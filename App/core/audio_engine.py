@@ -47,7 +47,7 @@ class AudioEngine:
         base_alpha = 0.001 + self.cutoff * 0.099
         
         # Calculate high and low cutoffs based on bandwidth
-        bandwidth_offset = self.bandwidth * 0.05  # Scale bandwidth effect
+        bandwidth_offset = self.bandwidth * 0.05  # Return to original scaling
         high_alpha = min(0.1, base_alpha + bandwidth_offset)
         low_alpha = max(0.001, base_alpha - bandwidth_offset)
         
@@ -68,10 +68,8 @@ class AudioEngine:
             lp[i] = low_alpha * hp[i] + (1 - low_alpha) * self.lp_prev_y
             self.lp_prev_y = lp[i]
         
-        # Dynamic gain compensation based on bandwidth
-        # When bandwidth is narrow (close to 0), we reduce gain compensation
-        # When bandwidth is wide (close to 1), we maintain the original 1.5x gain
-        gain_compensation = 1.0 + (0.5 * self.bandwidth)
+        # Base gain of 1.5x plus small bandwidth-dependent adjustment
+        gain_compensation = 1.5 + (0.2 * (1.0 - self.bandwidth))  # More gain for narrow bandwidth
         lp *= gain_compensation
         
         # Clip to prevent any potential overflow
