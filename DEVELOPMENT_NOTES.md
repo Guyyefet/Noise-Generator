@@ -1,36 +1,45 @@
 # Noise Playground Development Notes
 
-## Audio Engine Implementation
+## Audio Engine Architecture
 
-### Noise Generation
-- Using XOR shift algorithm for pseudo-random number generation
-- Normalized to [-1, 1] range
-- Original implementation included Markov chain for colored noise (currently disabled)
+### Design Patterns
+- Observer Pattern:
+  - NoiseParameters acts as Subject
+  - GUI components observe parameter changes
+  - Ensures UI stays in sync with audio engine
+  - Decouples parameter management from audio processing
 
-### Bandpass Filter
-- Implemented as cascaded high-pass and low-pass filters
-- Filter coefficients properly normalized for unity gain
-- High-pass: y[n] = x[n] - x[n-1] + (1-alpha) * y[n-1]
-- Low-pass: y[n] = alpha * x[n] + (1-alpha) * y[n-1]
-- Base gain (1.5x) with small bandwidth-dependent boost
-- Narrow bandwidth gets slightly more gain (+0.2x)
-- Cutoff frequency and bandwidth controls
+- Strategy Pattern:
+  - Modular audio processing components
+  - Separate generators and filters
+  - Easy to extend with new noise types
+  - Clean separation of concerns
+
+### Core Components
+- NoiseGenerator (Strategy):
+  - Abstract base class for noise generation
+  - XorShift implementation for white noise
+  - Normalized to [-1, 1] range
+
+- AudioFilter (Strategy):
+  - Abstract base class for audio processing
+  - Bandpass implementation:
+    - Cascaded high-pass and low-pass filters
+    - Filter coefficients properly normalized
+    - High-pass: y[n] = x[n] - x[n-1] + (1-alpha) * y[n-1]
+    - Low-pass: y[n] = alpha * x[n] + (1-alpha) * y[n-1]
+    - Base gain (1.5x) with small bandwidth-dependent boost
+    - Narrow bandwidth gets slightly more gain (+0.2x)
 
 ### Signal Chain
-1. Noise Generation ([-1,1])
-2. Bandpass Filter (normalized coefficients)
-3. Gain Compensation (1.5x)
+1. Parameter Updates (Observer pattern)
+2. Noise Generation (Strategy pattern)
+3. Filter Processing (Strategy pattern)
 4. Volume Control
 5. Clip Protection
 
 ## Future Ideas
 
-### GUI Improvements
-- Consider switching from matplotlib to PyQt/pyqtgraph for:
-  - Better real-time performance
-  - More flexible layouts
-  - Native-looking controls
-  - Easier component management
 
 ### Audio Engine Improvements
 - Re-enable colored noise with improved implementation
@@ -48,3 +57,6 @@
      - Cons: Requires significant filter implementation changes
 
 ### TODO
+- Add more generator types (e.g., colored noise)
+- Implement additional filter types
+- Add preset management system

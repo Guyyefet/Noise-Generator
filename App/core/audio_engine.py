@@ -1,76 +1,25 @@
-import numpy as np
+from .strategies.bandpass import BandpassStrategy
 
 class AudioEngine:
-    """Handles pure sound generation logic."""
+    """Handles audio generation using configurable strategies."""
     
     def __init__(self):
-        self.seed = 12345
-        self.color_param = 0.0
-        self.volume = 0.5
-        self.cutoff = 0.5
-        self.bandwidth = 0.5
-        # Filter states
-        self.hp_prev_x = 0.0
-        self.hp_prev_y = 0.0
-        self.lp_prev_y = 0.0
+        # Initialize with default bandpass strategy
+        self.strategy = BandpassStrategy()
+        self.parameters = {
+            'volume': 0.5,
+            'cutoff': 0.5,
+            'bandwidth': 0.5
+        }
 
     def set_parameters(self, color: float, volume: float, cutoff: float, bandwidth: float):
         """Set sound generation parameters."""
-        self.color_param = color
-        self.volume = volume
-        self.cutoff = cutoff
-        self.bandwidth = bandwidth
-
-    def _xor_shift(self, seed: int):
-        """Generate a single XOR-shift pseudorandom number."""
-        seed ^= (seed << 13) & 0xFFFFFFFF
-        seed ^= (seed >> 17) & 0xFFFFFFFF
-        seed ^= (seed << 5) & 0xFFFFFFFF
-        return seed & 0xFFFFFFFF
+        self.parameters.update({
+            'volume': volume,
+            'cutoff': cutoff,
+            'bandwidth': bandwidth
+        })
 
     def generate_noise(self, frames: int):
-        """Generate white noise using XOR shift."""
-        noise = np.zeros(frames)
-
-        for i in range(frames):
-            self.seed = self._xor_shift(self.seed)
-            # Normalize to range [-1, 1]
-            noise[i] = (self.seed / 0x7FFFFFFF) - 1.0
-
-        # Apply bandpass filter
-        filtered = self._apply_bandpass(noise)
-        return filtered * self.volume
-
-    def _apply_bandpass(self, x: np.ndarray) -> np.ndarray:
-        """Apply bandpass filter to input signal."""
-        # Map cutoff from 0-1 to reasonable filter coefficient (0.001 to 0.1)
-        base_alpha = 0.001 + self.cutoff * 0.099
-        
-        # Calculate high and low cutoffs based on bandwidth
-        bandwidth_offset = self.bandwidth * 0.05  # Return to original scaling
-        high_alpha = min(0.1, base_alpha + bandwidth_offset)
-        low_alpha = max(0.001, base_alpha - bandwidth_offset)
-        
-        # Initialize output arrays
-        hp = np.zeros_like(x)
-        lp = np.zeros_like(x)
-        
-        # High-pass filter
-        for i in range(len(x)):
-            # y[n] = x[n] - x[n-1] + (1-alpha) * y[n-1]
-            hp[i] = x[i] - self.hp_prev_x + (1 - high_alpha) * self.hp_prev_y
-            self.hp_prev_y = hp[i]
-            self.hp_prev_x = x[i]
-        
-        # Low-pass filter
-        for i in range(len(hp)):
-            # y[n] = alpha * x[n] + (1-alpha) * y[n-1]
-            lp[i] = low_alpha * hp[i] + (1 - low_alpha) * self.lp_prev_y
-            self.lp_prev_y = lp[i]
-        
-        # Base gain of 1.5x plus small bandwidth-dependent adjustment
-        gain_compensation = 1.5 + (0.2 * (1.0 - self.bandwidth))  # More gain for narrow bandwidth
-        lp *= gain_compensation
-        
-        # Clip to prevent any potential overflow
-        return np.clip(lp, -1.0, 1.0)
+        """Generate noise using current strategy."""
+        return self.strategy.process_audio(frames, self.parameters)
