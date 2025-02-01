@@ -1,6 +1,8 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QSlider, QLabel, QComboBox
 from PyQt6.QtCore import Qt
 from core.noise_parameters import NoiseParameters
+from core.parameter_definitions import get_registry
+from typing import Dict, Any
 
 class NoiseControlsWidget(QWidget):
     """Widget containing noise parameter controls."""
@@ -8,7 +10,8 @@ class NoiseControlsWidget(QWidget):
     def __init__(self, parameters: NoiseParameters):
         super().__init__()
         self.parameters = parameters
-        self.sliders = []
+        self.registry = get_registry()
+        self.sliders: Dict[str, QSlider] = {}
         self.generator_combo = None
         self.filter_combo = None
         self._setup_ui()
@@ -35,49 +38,63 @@ class NoiseControlsWidget(QWidget):
         self.filter_combo.currentTextChanged.connect(self._on_selection_changed)
         layout.addWidget(self.filter_combo)
         
-        # Create sliders with same ranges as current GUI
-        slider_params = [
-            ("Volume", 0.0, 1.0, 0.5),
-            ("Filter cutoff", 0.0, 1.0, 0.5),
-            ("Bandwidth", 0.0, 1.0, 0.5)
-        ]
-        
-        for label_text, min_val, max_val, default in slider_params:
-            # Create label
+        # Create sliders based on parameter definitions
+        for definition in self.registry.get_all_definitions():
+            # Create label with display name and units
+            label_text = f"{definition.display_name}"
+            if definition.units:
+                label_text += f" ({definition.units})"
             label = QLabel(label_text)
             layout.addWidget(label)
             
-            # Create slider
+            # Create slider with proper range and resolution
             slider = QSlider(Qt.Orientation.Horizontal)
-            slider.setMinimum(0)
-            slider.setMaximum(1000)  # Use finer resolution
-            slider.setValue(int(default * 1000))
-            slider.setPageStep(0)  # Make it continuous
-            slider.valueChanged.connect(self._on_slider_changed)
-            self.sliders.append(slider)
-            layout.addWidget(slider)
+            
+            # Set range based on parameter definition
+            if definition.range:
+                min_val = definition.range.min_value
+                max_val = definition.range.max_value
+                resolution = 1000  # Steps between min and max
+                slider.setMinimum(0)
+                slider.setMaximum(resolution)
+                slider.setValue(int(
+                    (definition.default_value - min_val) / 
+                    (max_val - min_val) * resolution
+                ))
+                slider.setPageStep(0)  # Make it continuous
+                
+                # Store mapping from slider to parameter name
+                self.sliders[definition.name] = slider
+                slider.valueChanged.connect(self._on_slider_changed)
+                layout.addWidget(slider)
         
         self.setLayout(layout)
     
     def _on_slider_changed(self):
         """Handle slider value changes."""
-        # Convert slider integer values back to 0-1 range
-        values = [slider.value() / 1000.0 for slider in self.sliders]
-        self._update_all_parameters(values)
+        params = {}
+        for param_name, slider in self.sliders.items():
+            definition = self.registry.get_definition(param_name)
+            if definition.range:
+                # Convert slider value back to parameter range
+                min_val = definition.range.min_value
+                max_val = definition.range.max_value
+                resolution = slider.maximum()
+                value = min_val + (slider.value() / resolution) * (max_val - min_val)
+                params[param_name] = value
+        self._update_parameters(params)
     
     def _on_selection_changed(self):
         """Handle combo box selection changes."""
-        values = [slider.value() / 1000.0 for slider in self.sliders]
-        self._update_all_parameters(values)
+        self._update_parameters({
+            "generator_type": self.generator_combo.currentText(),
+            "filter_type": self.filter_combo.currentText()
+        })
     
-    def _update_all_parameters(self, slider_values):
-        """Update all parameters including selections."""
-        generator_type = self.generator_combo.currentText()
-        filter_type = self.filter_combo.currentText()
-        self.parameters.update_parameters(
-            generator_type=generator_type,
-            filter_type=filter_type,
-            volume=slider_values[0],
-            cutoff=slider_values[1],
-            bandwidth=slider_values[2]
-        )
+    def _update_parameters(self, params: Dict[str, Any]):
+        """Update parameters with validation."""
+        try:
+            self.parameters.update_parameters(**params)
+        except (ValueError, KeyError) as e:
+            # Log error but continue with valid parameters
+            print(f"Parameter update error: {str(e)}")

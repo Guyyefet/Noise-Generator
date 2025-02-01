@@ -1,6 +1,8 @@
 from core.observer import Observer
 from core.audio_engine import AudioEngineBase
 from core.audio_stream import AudioStream
+import logging
+from typing import Dict, Any
 
 class AudioParameterObserver(Observer):
     """Observes GUI parameter changes and coordinates audio components."""
@@ -18,21 +20,37 @@ class AudioParameterObserver(Observer):
         
         # Connect audio engine to stream
         self.audio_stream.generate_audio = self.audio_engine.generate_noise
+        
+        # Set up logging
+        self.logger = logging.getLogger(__name__)
 
-    def update(self, parameters: dict):
+    def update(self, parameters: Dict[str, Any]):
         """
         Update audio parameters when notified by GUI (Subject).
         
         Args:
             parameters: Dictionary of parameter key-value pairs
         """
-        # Pass through all parameters directly to the engine
-        self.audio_engine.set_parameters(**parameters)
+        try:
+            # Pass validated parameters to the engine
+            self.audio_engine.set_parameters(**parameters)
+        except (ValueError, KeyError) as e:
+            # Log validation errors but continue with valid parameters
+            self.logger.error(f"Parameter validation error: {str(e)}")
+            # Could add GUI feedback here in the future
 
     def start(self):
         """Start audio streaming."""
-        self.audio_stream.start()
+        try:
+            self.audio_stream.start()
+        except Exception as e:
+            self.logger.error(f"Failed to start audio stream: {str(e)}")
+            raise
 
     def stop(self):
         """Stop audio streaming."""
-        self.audio_stream.stop()
+        try:
+            self.audio_stream.stop()
+        except Exception as e:
+            self.logger.error(f"Failed to stop audio stream: {str(e)}")
+            raise
