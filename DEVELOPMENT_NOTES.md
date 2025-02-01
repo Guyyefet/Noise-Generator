@@ -49,7 +49,6 @@
 
 ## Future Ideas
 
-
 ### Audio Engine Improvements
 - Re-enable colored noise with improved implementation
 - Improve low frequency response with either:
@@ -69,3 +68,90 @@
 - Add more generator types (e.g., colored noise)
 - Implement additional filter types
 - Add preset management system
+
+## Refactoring Plan: Making the System More Flexible
+
+### Phase 1: Parameter System Overhaul
+1. Convert to Dictionary-based Parameters
+   - Update NoiseParameters to use dictionary storage
+   - Modify parameter passing throughout the system
+   - Add basic parameter validation
+   Benefits: 
+   - Immediate flexibility in parameter handling
+   - Foundation for future improvements
+   - Minimal breaking changes
+
+2. Implement Parameter Registry
+   - Create ParameterDefinition class for metadata
+   - Set up central parameter registry
+   - Add type checking and validation
+   Benefits:
+   - Better parameter documentation
+   - Runtime validation
+   - Clear parameter contracts
+
+### Phase 2: Dynamic Component System
+1. Create Component Factories
+   - Implement AudioStrategyFactory
+   - Set up component registries
+   - Create factory methods for each component type
+   Benefits:
+   - Easy addition of new generators/filters
+   - Clean component instantiation
+   - Better separation of concerns
+
+2. Implement Processing Chain
+   - Create AudioChain class
+   - Support dynamic processor ordering
+   - Add processor lifecycle management
+   Benefits:
+   - Flexible effect chaining
+   - Easy to add new effect types
+   - Better audio pipeline control
+
+### Phase 3: Advanced Features
+1. Add Preset System
+   - Implement PresetManager
+   - Add save/load functionality
+   - Create preset file format
+   Benefits:
+   - User-saveable configurations
+   - Shareable presets
+   - Quick parameter switching
+
+2. Enhance GUI Integration
+   - Update GUI for dynamic parameters
+   - Add component controls
+   - Implement preset UI
+   Benefits:
+   - Better user experience
+   - Visual feedback for all features
+   - Intuitive preset management
+
+### Implementation Strategy
+1. Start with Phase 1.1 (Dictionary Parameters)
+   - Minimal changes, immediate benefits
+   - Sets foundation for future work
+   - Quick wins for flexibility
+
+2. Evaluate after each sub-phase
+   - Test thoroughly
+   - Gather feedback
+   - Adjust next steps as needed
+
+3. Keep backward compatibility
+   - Support existing features
+   - Gradual deprecation of old systems
+   - Smooth transition path
+
+### Dependencies Between Phases
+- Phase 1.1 required for all other phases
+- Phase 1.2 enhances 1.1 but optional
+- Phase 2 can start after 1.1
+- Phase 3 requires Phase 2
+
+### Risk Management
+- Unit tests for each phase
+- Feature flags for new capabilities
+- Fallback paths for critical features
+- Gradual rollout of changes

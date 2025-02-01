@@ -18,14 +18,11 @@ class AudioEngineBase(ABC):
         pass
     
     @abstractmethod
-    def set_parameters(self, color: float, volume: float, cutoff: float, bandwidth: float):
+    def set_parameters(self, **parameters):
         """Set engine parameters.
         
         Args:
-            color: Noise color parameter
-            volume: Output volume (0.0 to 1.0)
-            cutoff: Filter cutoff frequency (0.0 to 1.0)
-            bandwidth: Filter bandwidth (0.0 to 1.0)
+            **parameters: Dictionary of parameter key-value pairs
         """
         pass
 
@@ -35,19 +32,18 @@ class BandpassAudioEngine(AudioEngineBase):
     def __init__(self):
         # Initialize with default bandpass strategy
         self.strategy = BandpassStrategy()
-        self.parameters = {
-            'volume': 0.5,
-            'cutoff': 0.5,
-            'bandwidth': 0.5
-        }
+        self.parameters = {}
 
-    def set_parameters(self, color: float, volume: float, cutoff: float, bandwidth: float):
-        """Set sound generation parameters."""
-        self.parameters.update({
-            'volume': volume,
-            'cutoff': cutoff,
-            'bandwidth': bandwidth
-        })
+    def set_parameters(self, **parameters):
+        """
+        Set sound generation parameters.
+        
+        Args:
+            **parameters: Dictionary of parameter key-value pairs that will be passed
+                         through to the strategy
+        """
+        # Store all parameters without assumptions about their names/types
+        self.parameters = parameters  # Replace instead of update to avoid parameter accumulation
 
     def generate_noise(self, frames: int):
         """Generate noise using current strategy."""

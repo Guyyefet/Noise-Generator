@@ -5,30 +5,32 @@ class NoiseParameters(Subject):
     
     def __init__(self):
         super().__init__()
-        # Initialize default parameter values
-        self.generator_type = "White Noise"
-        self.filter_type = "Bandpass"
-        self.volume = 0.5
-        self.cutoff = 0.5
-        self.bandwidth = 0.5
+        self.parameters = {}  # Empty dict - no default values
     
-    def update_parameters(self, generator_type: str, filter_type: str, 
-                         volume: float, cutoff: float, bandwidth: float):
-        """Update all parameters and notify observers."""
-        self.generator_type = generator_type
-        self.filter_type = filter_type
-        self.volume = volume
-        self.cutoff = cutoff
-        self.bandwidth = bandwidth
+    def update_parameters(self, **kwargs):
+        """
+        Update parameters and notify observers.
+        
+        Args:
+            **kwargs: Parameter key-value pairs to update
+        """
+        self.parameters.update(kwargs)
         self.notify()
+    
+    def get_parameter(self, name: str, default=None):
+        """
+        Get a parameter value.
+        
+        Args:
+            name: Parameter name
+            default: Default value if parameter doesn't exist
+        
+        Returns:
+            Parameter value or default if not found
+        """
+        return self.parameters.get(name, default)
     
     def notify(self, _ = None):
         """Notify observers with current parameter values."""
         for observer in self.observers:
-            observer.update(
-                self.generator_type,
-                self.filter_type,
-                self.volume,
-                self.cutoff,
-                self.bandwidth
-            )
+            observer.update(self.parameters)

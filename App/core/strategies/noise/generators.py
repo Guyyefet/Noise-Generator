@@ -5,11 +5,12 @@ class NoiseGenerator(ABC):
     """Base class for noise generation algorithms."""
     
     @abstractmethod
-    def generate(self, frames: int) -> np.ndarray:
+    def generate(self, frames: int, parameters: dict = None) -> np.ndarray:
         """Generate noise frames.
         
         Args:
             frames: Number of frames to generate
+            parameters: Dictionary of parameter key-value pairs
             
         Returns:
             numpy.ndarray: Generated noise frames in [-1, 1] range
@@ -19,8 +20,8 @@ class NoiseGenerator(ABC):
 class XorShiftGenerator(NoiseGenerator):
     """XOR shift noise generator."""
     
-    def __init__(self, seed: int = 12345):
-        self.seed = seed
+    def __init__(self):
+        self.seed = 12345  # Default seed, can be overridden by parameters
     
     def _xor_shift(self, seed: int) -> int:
         """Generate a single XOR-shift pseudorandom number."""
@@ -29,8 +30,17 @@ class XorShiftGenerator(NoiseGenerator):
         seed ^= (seed << 5) & 0xFFFFFFFF
         return seed & 0xFFFFFFFF
     
-    def generate(self, frames: int) -> np.ndarray:
-        """Generate white noise using XOR shift."""
+    def generate(self, frames: int, parameters: dict = None) -> np.ndarray:
+        """Generate white noise using XOR shift.
+        
+        Args:
+            frames: Number of frames to generate
+            parameters: Dictionary containing optional parameters:
+                - seed: Random seed value (int)
+        """
+        if parameters is not None:
+            # Update seed if provided in parameters
+            self.seed = parameters.get('seed', self.seed)
         noise = np.zeros(frames)
         for i in range(frames):
             self.seed = self._xor_shift(self.seed)

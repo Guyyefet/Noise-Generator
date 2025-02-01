@@ -31,18 +31,17 @@ class BandpassFilter(AudioFilter):
         
         Args:
             audio: Input audio frames
-            parameters: Dictionary containing:
-                - cutoff: Filter cutoff frequency (0.0 to 1.0)
-                - bandwidth: Filter bandwidth (0.0 to 1.0)
+            parameters: Dictionary of parameter key-value pairs
         """
-        cutoff = parameters['cutoff']
-        bandwidth = parameters['bandwidth']
+        # Get parameters with defaults
+        cutoff = parameters.get('cutoff', 0.5)
+        bandwidth = parameters.get('bandwidth', 0.5)
         
         # Map cutoff from 0-1 to reasonable filter coefficient (0.001 to 0.1)
         base_alpha = 0.001 + cutoff * 0.099
         
         # Calculate high and low cutoffs based on bandwidth
-        bandwidth_offset = bandwidth * 0.05  # Return to original scaling
+        bandwidth_offset = bandwidth * 0.05
         high_alpha = min(0.1, base_alpha + bandwidth_offset)
         low_alpha = max(0.001, base_alpha - bandwidth_offset)
         

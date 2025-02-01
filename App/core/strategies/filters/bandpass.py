@@ -15,16 +15,15 @@ class BandpassStrategy(NoiseEngineStrategy):
         
         Args:
             frames: Number of audio frames to generate
-            parameters: Dictionary containing:
-                - volume: Output volume (0.0 to 1.0)
-                - cutoff: Filter cutoff frequency (0.0 to 1.0)
-                - bandwidth: Filter bandwidth (0.0 to 1.0)
+            parameters: Dictionary of parameter key-value pairs that will be passed
+                       to both generator and filter components
         """
-        # Generate raw noise
-        noise = self.generator.generate(frames)
+        # Generate raw noise with parameters
+        noise = self.generator.generate(frames, parameters)
         
-        # Apply filter
+        # Apply filter with parameters
         filtered = self.filter.process(noise, parameters)
         
-        # Apply volume
-        return filtered * parameters['volume']
+        # Apply volume if specified
+        volume = parameters.get('volume', 1.0)
+        return filtered * volume

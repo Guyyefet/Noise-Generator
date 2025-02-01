@@ -19,18 +19,15 @@ class AudioParameterObserver(Observer):
         # Connect audio engine to stream
         self.audio_stream.generate_audio = self.audio_engine.generate_noise
 
-    def update(self, generator_type: str, filter_type: str, 
-               volume: float, cutoff: float, bandwidth: float):
-        """Update audio parameters when notified by GUI (Subject)."""
-        # Convert generator_type to color parameter (temporary mapping)
-        color = 0.5  # Default color value
+    def update(self, parameters: dict):
+        """
+        Update audio parameters when notified by GUI (Subject).
         
-        self.audio_engine.set_parameters(
-            color=color,
-            volume=volume,
-            cutoff=cutoff,
-            bandwidth=bandwidth
-        )
+        Args:
+            parameters: Dictionary of parameter key-value pairs
+        """
+        # Pass through all parameters directly to the engine
+        self.audio_engine.set_parameters(**parameters)
 
     def start(self):
         """Start audio streaming."""

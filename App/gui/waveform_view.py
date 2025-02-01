@@ -96,7 +96,13 @@ class WaveformView(QWidget, Observer):
         self.setLayout(layout)
         
         # Initialize filter response with defaults after UI setup
-        self.update("White Noise", "Bandpass", 0.5, 0.5, 0.5)  # Default values
+        self.update({
+            'generator_type': 'White Noise',
+            'filter_type': 'Bandpass',
+            'volume': 0.5,
+            'cutoff': 0.5,
+            'bandwidth': 0.5
+        })
     
     def update_waveform(self, data: np.ndarray):
         """Update the waveform display with new data."""
@@ -108,9 +114,12 @@ class WaveformView(QWidget, Observer):
         self.waveform_buffer[-len(data):] = data
         self.has_new_data = True
     
-    def update(self, generator_type: str, filter_type: str, 
-               volume: float, cutoff: float, bandwidth: float):
+    def update(self, parameters: dict):
         """Update from NoiseParameters (Observer pattern)."""
+        # Get parameters with defaults
+        cutoff = parameters.get('cutoff', 0.5)
+        bandwidth = parameters.get('bandwidth', 0.5)
+        
         # Map cutoff from 0-1 to center frequency (20Hz-20kHz)
         self.center_freq = 20 * (20000/20)**cutoff
         
