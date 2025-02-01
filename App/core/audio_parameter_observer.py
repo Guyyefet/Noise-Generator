@@ -22,9 +22,11 @@ class AudioParameterObserver(Observer):
     def update(self, generator_type: str, filter_type: str, 
                volume: float, cutoff: float, bandwidth: float):
         """Update audio parameters when notified by GUI (Subject)."""
+        # Convert generator_type to color parameter (temporary mapping)
+        color = 0.5  # Default color value
+        
         self.audio_engine.set_parameters(
-            generator_type=generator_type,
-            filter_type=filter_type,
+            color=color,
             volume=volume,
             cutoff=cutoff,
             bandwidth=bandwidth
