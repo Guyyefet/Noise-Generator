@@ -66,7 +66,11 @@ class AudioStream:
         """Start audio streaming in a separate thread."""
         if self.audio_thread is None or not self.audio_thread.is_alive():
             self.stop_event.clear()
-            self.audio_thread = Thread(target=self.stream_thread, daemon=True)
+            self.audio_thread = Thread(
+                target=self.stream_thread,
+                daemon=True,
+                name="AudioThread"
+            )
             self.audio_thread.start()
 
     def stop(self):

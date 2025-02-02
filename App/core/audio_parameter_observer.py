@@ -1,6 +1,6 @@
-from core.observer import Observer
-from core.audio_engine import AudioEngineBase
-from core.audio_stream import AudioStream
+from App.core.observer import Observer
+from App.core.audio_engine import AudioEngineBase
+from App.core.audio_stream import AudioStream
 import logging
 from typing import Dict, Any
 
