@@ -174,3 +174,74 @@
 - Feature flags for new capabilities
 - Fallback paths for critical features
 - Gradual rollout of changes
+
+## Testing
+
+Let's create a step-by-step plan for implementing tests for your QT + sounddevice noise generator app:
+Phase 1: Local Test Setup
+
+Set up test environment
+
+Install pytest and pytest-qt
+Create requirements-dev.txt for test dependencies
+Set up pytest.ini configuration
+Create basic test structure in /tests
+
+
+Unit Tests (Start Locally)
+
+Test QT widgets
+
+Button clicks
+Slider movements
+Signal/slot connections
+
+
+Test sound processing
+
+Basic signal generation
+Parameter validation
+Data transformations
+
+
+
+
+Integration Tests (Local First)
+
+GUI and sound engine interaction
+Audio stream handling
+Real-time parameter updates
+
+
+Real Device Tests (Local Only)
+
+Actual audio output tests
+Latency measurements
+Hardware compatibility checks
+Performance benchmarks
+
+
+
+Phase 2: CI Implementation
+
+Basic CI Setup
+
+Create GitHub Actions workflow
+Install system dependencies (Qt, sounddevice)
+Configure test environment
+
+
+Adapt Tests for CI
+
+Modify sounddevice tests to use null device
+Add mocks for hardware-dependent functions
+Skip tests that require real audio hardware
+Add appropriate test markers
+
+
+Test Categories in CI:
+
+Unit tests with mocked audio
+GUI tests with PyTestQT
+Integration tests with null device
+Code coverage reporting
