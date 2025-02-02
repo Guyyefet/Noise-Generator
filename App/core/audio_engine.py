@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 import numpy as np
-from .strategies.filters.bandpass import BandpassStrategy
+from typing import List, Dict, Any
+from .processor_factory import AudioProcessorFactory
+from .strategies.base import NoiseEngineStrategy
 
 class AudioEngineBase(ABC):
     """Base class for audio engine implementations."""
@@ -27,24 +29,56 @@ class AudioEngineBase(ABC):
         pass
 
 class BandpassAudioEngine(AudioEngineBase):
-    """Handles audio generation using configurable strategies."""
+    """Handles audio generation using a configurable processing chain."""
     
-    def __init__(self):
-        # Initialize with default bandpass strategy
-        self.strategy = BandpassStrategy()
+    DEFAULT_CONFIG = {
+        "processors": [
+            {"type": "noise"},
+            {"type": "bandpass"}
+        ]
+    }
+    
+    def __init__(self, config: Dict[str, Any] = None):
+        """Initialize audio engine with processor chain.
+        
+        Args:
+            config: Configuration dictionary specifying processor chain.
+                   If None, uses DEFAULT_CONFIG.
+        """
+        if config is None:
+            config = self.DEFAULT_CONFIG
+            
+        # Initialize processor chain from config
+        self.processors: List[NoiseEngineStrategy] = [
+            AudioProcessorFactory.create(proc["type"], **proc.get("params", {}))
+            for proc in config["processors"]
+        ]
+        
         self.parameters = {}
 
     def set_parameters(self, **parameters):
-        """
-        Set sound generation parameters.
+        """Set parameters for all processors in chain.
         
         Args:
             **parameters: Dictionary of parameter key-value pairs that will be passed
-                         through to the strategy
+                         through to all processors
         """
-        # Store all parameters without assumptions about their names/types
-        self.parameters = parameters  # Replace instead of update to avoid parameter accumulation
+        self.parameters = parameters
 
-    def generate_noise(self, frames: int):
-        """Generate noise using current strategy."""
-        return self.strategy.process_audio(frames, self.parameters)
+    def generate_noise(self, frames: int) -> np.ndarray:
+        """Generate and process audio through processor chain.
+        
+        Args:
+            frames: Number of frames to generate
+            
+        Returns:
+            Processed audio data
+        """
+        # Start with first processor (generator)
+        audio = self.processors[0].process_audio(frames, self.parameters)
+        
+        # Pass through remaining processors in chain
+        for processor in self.processors[1:]:
+            audio = processor.process_audio(audio, self.parameters)
+            
+        return audio

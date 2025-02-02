@@ -1,23 +1,7 @@
 import numpy as np
-from abc import ABC, abstractmethod
+from ..base import NoiseEngineStrategy
 
-class AudioFilter(ABC):
-    """Base class for audio filters."""
-    
-    @abstractmethod
-    def process(self, audio: np.ndarray, parameters: dict) -> np.ndarray:
-        """Process audio with filter.
-        
-        Args:
-            audio: Input audio frames
-            parameters: Filter parameters
-            
-        Returns:
-            numpy.ndarray: Filtered audio frames
-        """
-        pass
-
-class BandpassFilter(AudioFilter):
+class BandpassFilter(NoiseEngineStrategy):
     """Bandpass filter implementation."""
     
     def __init__(self):
@@ -26,12 +10,17 @@ class BandpassFilter(AudioFilter):
         self.hp_prev_y = 0.0
         self.lp_prev_y = 0.0
     
-    def process(self, audio: np.ndarray, parameters: dict) -> np.ndarray:
+    def process_audio(self, audio: np.ndarray, parameters: dict) -> np.ndarray:
         """Apply bandpass filter to input signal.
         
         Args:
             audio: Input audio frames
-            parameters: Dictionary of parameter key-value pairs
+            parameters: Dictionary of parameter key-value pairs containing:
+                - cutoff: Center frequency (0-1 range)
+                - bandwidth: Filter bandwidth (0-1 range)
+                
+        Returns:
+            Filtered audio data
         """
         # Get parameters with defaults
         cutoff = parameters.get('cutoff', 0.5)

@@ -2,6 +2,7 @@ from core.audio_engine import BandpassAudioEngine
 from core.audio_stream import AudioStream
 from core.audio_parameter_observer import AudioParameterObserver
 from core.noise_parameters import NoiseParameters
+from core.processor_registry import register_processors
 from gui.main_window import MainWindow
 from PyQt6.QtWidgets import QApplication
 import signal
@@ -19,9 +20,12 @@ def main():
     # Initialize Qt Application
     app = QApplication(sys.argv)
     
+    # Register available processors
+    register_processors()
+    
     # Create components
     parameters = NoiseParameters()
-    audio_engine = BandpassAudioEngine()  # Default to bandpass engine for now
+    audio_engine = BandpassAudioEngine()  # Uses default noise+bandpass config
     
     # Create and show main window first to have access to waveform view
     window = MainWindow(parameters)
