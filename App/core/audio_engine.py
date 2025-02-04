@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 import numpy as np
-from typing import List, Dict, Any
+from typing import Dict, Any, List
 from .processor_factory import AudioProcessorFactory
-from .strategies.base import NoiseEngineStrategy
+from .noise.base import NoiseGenerator
+from .filters.base import FilterBase
 
 class AudioEngineBase(ABC):
     """Base class for audio engine implementations."""
@@ -28,8 +29,8 @@ class AudioEngineBase(ABC):
         """
         pass
 
-class BandpassAudioEngine(AudioEngineBase):
-    """Handles audio generation using a configurable processing chain."""
+class AudioEngine(AudioEngineBase):
+    """Modular audio engine that can use any combination of generators and filters."""
     
     DEFAULT_CONFIG = {
         "processors": [
@@ -39,17 +40,19 @@ class BandpassAudioEngine(AudioEngineBase):
     }
     
     def __init__(self, config: Dict[str, Any] = None):
-        """Initialize audio engine with processor chain.
+        """Initialize audio engine with configurable components.
         
         Args:
-            config: Configuration dictionary specifying processor chain.
+            config: Configuration dictionary specifying:
+                   - generator: Type of noise generator to use
+                   - filters: List of filter types to apply in order
                    If None, uses DEFAULT_CONFIG.
         """
         if config is None:
             config = self.DEFAULT_CONFIG
             
         # Initialize processor chain from config
-        self.processors: List[NoiseEngineStrategy] = [
+        self.processors = [
             AudioProcessorFactory.create(proc["type"], **proc.get("params", {}))
             for proc in config["processors"]
         ]
@@ -57,16 +60,15 @@ class BandpassAudioEngine(AudioEngineBase):
         self.parameters = {}
 
     def set_parameters(self, **parameters):
-        """Set parameters for all processors in chain.
+        """Set parameters for all components.
         
         Args:
-            **parameters: Dictionary of parameter key-value pairs that will be passed
-                         through to all processors
+            **parameters: Dictionary of parameter key-value pairs
         """
         self.parameters = parameters
 
     def generate_noise(self, frames: int) -> np.ndarray:
-        """Generate and process audio through processor chain.
+        """Generate and process audio through component chain.
         
         Args:
             frames: Number of frames to generate

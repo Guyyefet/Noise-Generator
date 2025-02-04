@@ -1,45 +1,56 @@
-from typing import Type, Dict, Any
-from .strategies.base import NoiseEngineStrategy
+from typing import Type, Dict, Any, Union
+from .noise.base import NoiseGenerator
+from .filters.base import FilterBase
+from .noise.implementations.xorshift import XorShiftGenerator
+from .filters.implementations.bandpass import BandpassFilter
 
 class AudioProcessorFactory:
     """Factory for creating audio processor components."""
     
-    _processors: Dict[str, Type[NoiseEngineStrategy]] = {}
+    _noise_generators: Dict[str, Type[NoiseGenerator]] = {}
+    _filters: Dict[str, Type[FilterBase]] = {}
     
     @classmethod
-    def register(cls, name: str, processor_class: Type[NoiseEngineStrategy]) -> None:
-        """Register a processor class with the factory.
+    def register_generator(cls, name: str, generator_class: Type[NoiseGenerator]) -> None:
+        """Register a noise generator class.
         
         Args:
-            name: Unique identifier for the processor type
-            processor_class: Class to instantiate for this processor type
+            name: Unique identifier for the generator type
+            generator_class: Class to instantiate for this generator type
         """
-        cls._processors[name] = processor_class
+        cls._noise_generators[name] = generator_class
         
     @classmethod
-    def create(cls, name: str, **params) -> NoiseEngineStrategy:
+    def register_filter(cls, name: str, filter_class: Type[FilterBase]) -> None:
+        """Register a filter class.
+        
+        Args:
+            name: Unique identifier for the filter type
+            filter_class: Class to instantiate for this filter type
+        """
+        cls._filters[name] = filter_class
+        
+    @classmethod
+    def create(cls, processor_type: str, **params) -> Union[NoiseGenerator, FilterBase]:
         """Create a new processor instance.
         
         Args:
-            name: Identifier of the processor type to create
+            processor_type: Type of processor to create ('noise' or 'bandpass')
             **params: Parameters to pass to the processor constructor
             
         Returns:
             New processor instance
             
         Raises:
-            KeyError: If processor type is not registered
+            KeyError: If processor type is not supported
         """
-        if name not in cls._processors:
-            raise KeyError(f"Unknown processor type: {name}")
-            
-        return cls._processors[name](**params)
-        
-    @classmethod
-    def get_registered_types(cls) -> list[str]:
-        """Get list of registered processor types.
-        
-        Returns:
-            List of processor type names
-        """
-        return list(cls._processors.keys())
+        if processor_type == 'noise':
+            return XorShiftGenerator(**params)
+        elif processor_type == 'bandpass':
+            return BandpassFilter(**params)
+        else:
+            raise KeyError(f"Unknown processor type: {processor_type}")
+
+# Register default implementations
+AudioProcessorFactory.register_generator('xorshift', XorShiftGenerator)
+AudioProcessorFactory.register_filter('bandpass', BandpassFilter)

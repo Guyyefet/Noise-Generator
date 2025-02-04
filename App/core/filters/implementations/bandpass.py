@@ -1,11 +1,12 @@
 import numpy as np
-from ..base import NoiseEngineStrategy
+from ..base import FilterBase
 
-class BandpassFilter(NoiseEngineStrategy):
+class BandpassFilter(FilterBase):
     """Bandpass filter implementation."""
     
     def __init__(self):
-        # Filter states
+        super().__init__()
+        # Additional filter states for bandpass
         self.hp_prev_x = 0.0
         self.hp_prev_y = 0.0
         self.lp_prev_y = 0.0
@@ -18,6 +19,7 @@ class BandpassFilter(NoiseEngineStrategy):
             parameters: Dictionary of parameter key-value pairs containing:
                 - cutoff: Center frequency (0-1 range)
                 - bandwidth: Filter bandwidth (0-1 range)
+                - volume: Output volume scaling (optional)
                 
         Returns:
             Filtered audio data
@@ -55,5 +57,6 @@ class BandpassFilter(NoiseEngineStrategy):
         gain_compensation = 1.5 + (0.2 * (1.0 - bandwidth))  # More gain for narrow bandwidth
         lp *= gain_compensation
         
-        # Clip to prevent any potential overflow
-        return np.clip(lp, -1.0, 1.0)
+        # Apply volume and clip
+        output = self._apply_volume(lp, parameters)
+        return self._clip_output(output)
