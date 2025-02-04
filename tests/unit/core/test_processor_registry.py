@@ -1,14 +1,14 @@
 import pytest
 from unittest.mock import patch, Mock
-from App.core.processor_registry import register_processors
-from App.core.strategies.noise.generators import XorShiftGenerator
-from App.core.strategies.filters.filters import BandpassFilter
+from App.core.processors.processor_registry import register_processors
+from App.core.noise.implementations.xorshift import XorShiftGenerator
+from App.core.filters.implementations.bandpass import BandpassFilter
 
 class TestProcessorRegistry:
     @pytest.fixture
     def mock_factory(self):
         """Mock the AudioProcessorFactory."""
-        with patch('App.core.processor_registry.AudioProcessorFactory') as factory:
+        with patch('App.core.processors.processor_registry.AudioProcessorFactory') as factory:
             yield factory
     
     def test_register_processors(self, mock_factory):

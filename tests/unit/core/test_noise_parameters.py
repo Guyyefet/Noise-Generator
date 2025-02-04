@@ -1,6 +1,6 @@
 import pytest
-from App.core.noise_parameters import NoiseParameters
-from App.core.observer import Observer
+from App.core.parameters.noise_parameters import NoiseParameters
+from App.core.parameters.observer import Observer
 
 @pytest.fixture
 def test_observer():

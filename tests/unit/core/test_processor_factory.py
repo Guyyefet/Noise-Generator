@@ -1,9 +1,9 @@
 import pytest
 from unittest.mock import Mock
-from App.core.processor_factory import AudioProcessorFactory
-from App.core.strategies.base import NoiseEngineStrategy
+from App.core.processors.processor_factory import AudioProcessorFactory
+from App.core.noise.base import NoiseGenerator
 
-class MockProcessor(NoiseEngineStrategy):
+class MockProcessor(NoiseGenerator):
     """Mock processor for testing."""
     def __init__(self, **params):
         self.params = params
@@ -31,7 +31,7 @@ class TestAudioProcessorFactory:
         AudioProcessorFactory.register("test", MockProcessor)
         
         # Create new processor type
-        class NewProcessor(NoiseEngineStrategy):
+        class NewProcessor(NoiseGenerator):
             pass
         
         # Register with same name
@@ -73,7 +73,7 @@ class TestAudioProcessorFactory:
         assert len(types) == 0
     
     def test_processor_inheritance(self):
-        """Test that processors must inherit from NoiseEngineStrategy."""
+        """Test that processors must inherit from NoiseGenerator."""
         class InvalidProcessor:
             pass
         

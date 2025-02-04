@@ -1,9 +1,9 @@
-import pytest
-import numpy as np
+from App.core.audio.audio_stream import AudioStream
 from unittest.mock import Mock, patch, MagicMock
+import numpy as np
+import pytest
 import threading
 import time
-from App.core.audio_stream import AudioStream
 
 class TestAudioStream:
     @pytest.fixture
@@ -21,7 +21,7 @@ class TestAudioStream:
     @pytest.fixture
     def mock_sounddevice(self):
         """Mock the sounddevice module."""
-        with patch('App.core.audio_stream.sd') as mock_sd:
+        with patch('App.core.audio.audio_stream.sd') as mock_sd:
             # Mock OutputStream context manager
             mock_stream = MagicMock()
             mock_sd.OutputStream.return_value.__enter__.return_value = mock_stream
@@ -112,7 +112,7 @@ class TestAudioStream:
         stream = AudioStream(mock_callback)
         
         # Mock sounddevice to raise an error
-        with patch('App.core.audio_stream.sd.OutputStream') as mock_output_stream:
+        with patch('App.core.audio.audio_stream.sd.OutputStream') as mock_output_stream:
             mock_output_stream.side_effect = Exception("Test error")
             
             # Start stream (should handle error gracefully)

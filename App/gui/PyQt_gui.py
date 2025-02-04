@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QSlider, QLabel, QComboBox
 from PyQt6.QtCore import Qt
-from core.noise_parameters import NoiseParameters
-from core.parameter_definitions import get_registry
+from core.parameters.noise_parameters import NoiseParameters
+from core.parameters.parameter_definitions import get_registry
 from typing import Dict, Any
 
 class NoiseControlsWidget(QWidget):

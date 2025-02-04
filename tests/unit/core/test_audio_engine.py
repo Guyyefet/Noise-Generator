@@ -1,14 +1,18 @@
-import pytest
-import numpy as np
+from App.core.audio.audio_engine import AudioEngine
+from App.core.noise.base import NoiseGenerator
 from unittest.mock import Mock, patch
-from App.core.audio_engine import BandpassAudioEngine
-from App.core.strategies.base import NoiseEngineStrategy
+import numpy as np
+import pytest
 
-class MockProcessor(NoiseEngineStrategy):
+class MockProcessor(NoiseGenerator):
     """Mock processor for testing."""
     def __init__(self, name="mock"):
         self.name = name
         self.process_calls = []
+    
+    def generate(self, frames: int) -> np.ndarray:
+        """Implement abstract method."""
+        return np.zeros(frames)
     
     def process_audio(self, frames_or_audio, parameters):
         self.process_calls.append((frames_or_audio, parameters))
@@ -16,11 +20,11 @@ class MockProcessor(NoiseEngineStrategy):
             return np.zeros(frames_or_audio)
         return frames_or_audio
 
-class TestBandpassAudioEngine:
+class TestAudioEngine:
     @pytest.fixture
     def mock_factory(self):
         """Mock the AudioProcessorFactory."""
-        with patch('App.core.audio_engine.AudioProcessorFactory') as factory:
+        with patch('App.core.processors.processor_factory.AudioProcessorFactory') as factory:
             # Create mock processors
             generator = MockProcessor("generator")
             filter = MockProcessor("filter")
@@ -35,7 +39,7 @@ class TestBandpassAudioEngine:
     
     def test_initialization_default_config(self, mock_factory):
         """Test engine initializes with default config."""
-        engine = BandpassAudioEngine()
+        engine = AudioEngine()
         
         # Verify factory called correctly
         assert mock_factory.create.call_count == 2
@@ -54,7 +58,7 @@ class TestBandpassAudioEngine:
                 {"type": "bandpass", "params": {"cutoff": 0.5}}
             ]
         }
-        engine = BandpassAudioEngine(config)
+        engine = AudioEngine(config)
         
         # Verify factory called with params
         mock_factory.create.assert_any_call('noise', seed=42)
@@ -62,7 +66,7 @@ class TestBandpassAudioEngine:
     
     def test_set_parameters(self, mock_factory):
         """Test parameter setting."""
-        engine = BandpassAudioEngine()
+        engine = AudioEngine()
         params = {'cutoff': 0.5, 'bandwidth': 0.3}
         
         engine.set_parameters(**params)
@@ -70,7 +74,7 @@ class TestBandpassAudioEngine:
     
     def test_generate_noise(self, mock_factory):
         """Test noise generation and processing chain."""
-        engine = BandpassAudioEngine()
+        engine = AudioEngine()
         frames = 100
         params = {'cutoff': 0.5}
         engine.set_parameters(**params)
@@ -96,7 +100,7 @@ class TestBandpassAudioEngine:
     
     def test_processor_chain_order(self, mock_factory):
         """Test that processors are called in correct order."""
-        engine = BandpassAudioEngine()
+        engine = AudioEngine()
         
         # Create spy to track processing order
         process_order = []
@@ -129,7 +133,7 @@ class TestBandpassAudioEngine:
         }
         
         with pytest.raises(ValueError, match="Invalid processor type"):
-            BandpassAudioEngine(config)
+            AudioEngine(config)
 
     def test_processor_initialization_failure(self, mock_factory):
         """Test error handling when a processor fails to initialize."""
@@ -137,11 +141,11 @@ class TestBandpassAudioEngine:
         mock_factory.create.side_effect = RuntimeError("Initialization failed")
         
         with pytest.raises(RuntimeError, match="Initialization failed"):
-            BandpassAudioEngine()
+            AudioEngine()
 
     def test_parameter_validation(self, mock_factory):
         """Test parameter validation across the processing chain."""
-        engine = BandpassAudioEngine()
+        engine = AudioEngine()
         
         # Mock processors to validate parameters
         def validate_params(frames_or_audio, parameters):
@@ -165,7 +169,7 @@ class TestBandpassAudioEngine:
             "processors": []
         }
         
-        engine = BandpassAudioEngine(config)
+        engine = AudioEngine(config)
         assert len(engine.processors) == 0
         
         # Should handle empty chain gracefully
@@ -174,7 +178,7 @@ class TestBandpassAudioEngine:
 
     def test_audio_output_bounds(self, mock_factory):
         """Test that generated audio stays within [-1, 1] bounds."""
-        engine = BandpassAudioEngine()
+        engine = AudioEngine()
         
         # Configure first processor to generate out-of-bounds signal
         def generate_large_signal(frames, parameters):
@@ -193,7 +197,7 @@ class TestBandpassAudioEngine:
 
     def test_processor_chain_modification(self, mock_factory):
         """Test adding/removing processors at runtime."""
-        engine = BandpassAudioEngine()
+        engine = AudioEngine()
         original_chain_length = len(engine.processors)
         
         # Add a new processor

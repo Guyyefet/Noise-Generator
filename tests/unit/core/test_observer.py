@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import Mock
-from App.core.observer import Observer, Subject
+from App.core.parameters.observer import Observer, Subject
 
 class TestObserverPattern:
     @pytest.fixture

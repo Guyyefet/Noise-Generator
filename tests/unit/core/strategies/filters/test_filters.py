@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from App.core.strategies.filters.filters import BandpassFilter
+from App.core.filters.implementations.bandpass import BandpassFilter
 
 class TestBandpassFilter:
     @pytest.fixture

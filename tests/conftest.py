@@ -1,7 +1,7 @@
 import pytest
-from App.core.noise_parameters import NoiseParameters
-from App.core.parameter_definitions import ParameterRegistry, ParameterDefinition, ParameterType
-from App.core.parameter_system import Range
+from App.core.parameters.noise_parameters import NoiseParameters
+from App.core.parameters.parameter_definitions import ParameterRegistry, ParameterDefinition, ParameterType
+from App.core.parameters.parameter_system import Range
 
 @pytest.fixture
 def parameter_registry():

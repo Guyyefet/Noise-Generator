@@ -1,5 +1,5 @@
 import pytest
-from App.core.parameter_system import (
+from App.core.parameters.parameter_system import (
     ParameterType,
     Range,
     ParameterDefinition,

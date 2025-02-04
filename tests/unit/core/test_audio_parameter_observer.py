@@ -1,9 +1,9 @@
 import pytest
 from unittest.mock import Mock, patch
 import logging
-from App.core.audio_parameter_observer import AudioParameterObserver
-from App.core.audio_engine import AudioEngineBase
-from App.core.audio_stream import AudioStream
+from App.core.audio.audio_parameter_observer import AudioParameterObserver
+from App.core.audio.audio_engine import AudioEngineBase
+from App.core.audio.audio_stream import AudioStream
 
 class TestAudioParameterObserver:
     @pytest.fixture

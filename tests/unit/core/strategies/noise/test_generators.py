@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from App.core.strategies.noise.generators import XorShiftGenerator
+from App.core.noise.implementations.xorshift import XorShiftGenerator
 
 class TestXorShiftGenerator:
     @pytest.fixture
