@@ -31,24 +31,6 @@ registry.register(ParameterDefinition(
     display_name="Volume"
 ))
 
-registry.register(ParameterDefinition(
-    name="frequency",
-    param_type=ParameterType.INT,
-    default_value=440,
-    description="Base frequency for noise generation",
-    range=Range(20, 20000),
-    display_name="Frequency"
-))
-
-registry.register(ParameterDefinition(
-    name="noise_type",
-    param_type=ParameterType.STR,
-    default_value="white",
-    description="Type of noise to generate",
-    range=None,
-    display_name="Noise Type"
-))
-
 # Export the registry instance
 def get_registry() -> ParameterRegistry:
     """Get the global parameter registry instance."""
