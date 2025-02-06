@@ -1,8 +1,8 @@
-from typing import Type, Dict, Any, Union
 from ..noise.base import NoiseGenerator
 from ..noise.implementations.xorshift import XorShiftGenerator
 from ..filters.base import FilterBase
 from ..filters.implementations.bandpass import BandpassFilter
+from typing import Type, Dict, Any, Union
 
 class AudioProcessorFactory:
     """Factory for creating audio processor components."""

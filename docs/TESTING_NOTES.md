@@ -20,19 +20,48 @@
    - Strategy implementations (filters, generators)
 
 ### Next Steps
-1. Core Component Testing:
+1. Test Structure Reorganization:
+   - Reorganize test files to match App structure:
+     ```
+     tests/unit/core/
+     ├── audio/
+     │   ├── test_audio_engine.py
+     │   ├── test_audio_parameter_observer.py
+     │   └── test_audio_stream.py
+     ├── filters/
+     │   ├── test_base.py
+     │   └── implementations/
+     │       └── test_bandpass.py
+     ├── noise/
+     │   ├── test_base.py
+     │   └── implementations/
+     │       └── test_generators.py
+     ├── parameters/
+     │   ├── test_noise_parameters.py
+     │   ├── test_observer.py
+     │   ├── test_parameter_definitions.py
+     │   └── test_parameter_system.py
+     └── processors/
+         ├── test_processor_factory.py
+         └── test_processor_registry.py
+     ```
+   - Add __init__.py files in new directories
+   - No import changes needed (imports already use correct paths)
+   - Update conftest.py if needed for fixture organization
+
+2. Core Component Testing:
    - Write tests for audio_parameter_observer.py
    - Complete audio_engine.py test coverage
    - Add processor_factory.py tests
    - Test processor_registry.py functionality
 
-2. Strategy Testing:
+3. Strategy Testing:
    - Test noise generation strategies
    - Test filter implementations
    - Add bandpass filter tests
    - Test strategy base classes
 
-3. Integration Testing:
+4. Integration Testing:
    - Test component interactions
    - Verify parameter propagation
    - Test audio processing chain

@@ -1,8 +1,8 @@
-import pytest
-from unittest.mock import patch, Mock
 from App.core.processors.processor_registry import register_processors
 from App.core.noise.implementations.xorshift import XorShiftGenerator
 from App.core.filters.implementations.bandpass import BandpassFilter
+from unittest.mock import patch, Mock
+import pytest
 
 class TestProcessorRegistry:
     @pytest.fixture
@@ -17,13 +17,10 @@ class TestProcessorRegistry:
         register_processors()
         
         # Verify noise generator registration
-        mock_factory.register.assert_any_call("noise", XorShiftGenerator)
+        mock_factory.register_generator.assert_called_once_with("noise", XorShiftGenerator)
         
         # Verify filter registration
-        mock_factory.register.assert_any_call("bandpass", BandpassFilter)
-        
-        # Verify total number of registrations
-        assert mock_factory.register.call_count == 2
+        mock_factory.register_filter.assert_called_once_with("bandpass", BandpassFilter)
     
     def test_processor_types(self):
         """Test that registered processor types are valid."""
@@ -39,32 +36,33 @@ class TestProcessorRegistry:
         """Test that processors are registered in correct order."""
         # Track registration order
         registrations = []
-        def track_register(name, cls):
-            registrations.append((name, cls))
-        mock_factory.register.side_effect = track_register
+        def track_register_generator(name, cls):
+            registrations.append(("generator", name, cls))
+        def track_register_filter(name, cls):
+            registrations.append(("filter", name, cls))
+            
+        mock_factory.register_generator.side_effect = track_register_generator
+        mock_factory.register_filter.side_effect = track_register_filter
         
         # Register processors
         register_processors()
         
-        # Verify order
+        # Verify order - generators registered before filters
         assert registrations == [
-            ("noise", XorShiftGenerator),
-            ("bandpass", BandpassFilter)
+            ("generator", "noise", XorShiftGenerator),
+            ("filter", "bandpass", BandpassFilter)
         ]
     
     def test_duplicate_registration(self, mock_factory):
         """Test handling of duplicate registrations."""
-        # Mock register to track calls but allow duplicates
-        registrations = {}
-        def track_register(name, cls):
-            registrations[name] = cls
-        mock_factory.register.side_effect = track_register
-        
         # Register processors twice
         register_processors()
         register_processors()
         
-        # Verify only latest registration kept
-        assert len(registrations) == 2
-        assert registrations["noise"] == XorShiftGenerator
-        assert registrations["bandpass"] == BandpassFilter
+        # Verify each registration method called twice
+        assert mock_factory.register_generator.call_count == 2
+        assert mock_factory.register_filter.call_count == 2
+        
+        # Verify final registrations
+        mock_factory.register_generator.assert_called_with("noise", XorShiftGenerator)
+        mock_factory.register_filter.assert_called_with("bandpass", BandpassFilter)

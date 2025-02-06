@@ -6,7 +6,7 @@ import pytest
 
 class MockProcessor(NoiseGenerator):
     """Mock processor for testing."""
-    def __init__(self, name="mock"):
+    def __init__(self, name="mock", **kwargs):
         self.name = name
         self.process_calls = []
     
@@ -17,23 +17,26 @@ class MockProcessor(NoiseGenerator):
     def process_audio(self, frames_or_audio, parameters):
         self.process_calls.append((frames_or_audio, parameters))
         if isinstance(frames_or_audio, int):
-            return np.zeros(frames_or_audio)
+            return self.generate(frames_or_audio)
         return frames_or_audio
 
 class TestAudioEngine:
-    @pytest.fixture
+    @pytest.fixture(autouse=True)
     def mock_factory(self):
         """Mock the AudioProcessorFactory."""
-        with patch('App.core.processors.processor_factory.AudioProcessorFactory') as factory:
-            # Create mock processors
-            generator = MockProcessor("generator")
-            filter = MockProcessor("filter")
-            
+        generator = MockProcessor("generator")
+        filter = MockProcessor("filter")
+        
+        with patch('App.core.audio.audio_engine.AudioProcessorFactory') as factory:
             # Configure factory to return our mock processors
-            factory.create.side_effect = lambda proc_type, **kwargs: {
-                'noise': generator,
-                'bandpass': filter
-            }[proc_type]
+            # Configure factory to return our mock processors
+            def create_processor(proc_type, **kwargs):
+                if proc_type == 'noise':
+                    return generator
+                elif proc_type == 'bandpass':
+                    return filter
+                raise KeyError(f"Unknown processor type: {proc_type}")
+            factory.create.side_effect = create_processor
             
             yield factory
     
@@ -55,14 +58,14 @@ class TestAudioEngine:
         config = {
             "processors": [
                 {"type": "noise", "params": {"seed": 42}},
-                {"type": "bandpass", "params": {"cutoff": 0.5}}
+                {"type": "bandpass", "params": {}}  # Parameters go to process_audio, not constructor
             ]
         }
         engine = AudioEngine(config)
         
         # Verify factory called with params
-        mock_factory.create.assert_any_call('noise', seed=42)
-        mock_factory.create.assert_any_call('bandpass', cutoff=0.5)
+        mock_factory.create.assert_any_call('noise', **{"seed": 42})
+        mock_factory.create.assert_any_call('bandpass')
     
     def test_set_parameters(self, mock_factory):
         """Test parameter setting."""
@@ -124,7 +127,7 @@ class TestAudioEngine:
     def test_invalid_processor_type(self, mock_factory):
         """Test error handling when config contains invalid processor type."""
         # Configure factory to raise for invalid type
-        mock_factory.create.side_effect = ValueError("Invalid processor type")
+        mock_factory.create.side_effect = KeyError("Unknown processor type: invalid_type")
         
         config = {
             "processors": [
@@ -132,7 +135,7 @@ class TestAudioEngine:
             ]
         }
         
-        with pytest.raises(ValueError, match="Invalid processor type"):
+        with pytest.raises(KeyError, match="Unknown processor type: invalid_type"):
             AudioEngine(config)
 
     def test_processor_initialization_failure(self, mock_factory):

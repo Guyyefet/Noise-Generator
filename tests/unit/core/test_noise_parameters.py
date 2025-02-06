@@ -14,6 +14,11 @@ def test_observer():
             self.update_count += 1
     return TestObserver()
 
+@pytest.fixture
+def noise_parameters():
+    """Create a NoiseParameters instance for testing."""
+    return NoiseParameters()
+
 class TestNoiseParameters:
     def test_initialization(self, noise_parameters):
         """Test that NoiseParameters initializes with default values."""
@@ -80,23 +85,27 @@ class TestNoiseParameters:
 
     def test_multiple_parameter_update(self, noise_parameters):
         """Test updating multiple parameters at once."""
-        noise_parameters.update_parameters(volume=0.6, frequency=440)
+        noise_parameters.update_parameters(volume=0.6, cutoff=0.8)
         assert noise_parameters.parameters["volume"] == 0.6
-        assert noise_parameters.parameters["frequency"] == 440
+        assert noise_parameters.parameters["cutoff"] == 0.8
 
         # Test that all parameters are validated
         with pytest.raises(ValueError):
-            noise_parameters.update_parameters(volume=1.5, frequency=440)  # Invalid volume
+            noise_parameters.update_parameters(volume=1.5, cutoff=0.8)  # Invalid volume
         # Verify no parameters were updated after failed validation
         assert noise_parameters.parameters["volume"] == 0.6
-        assert noise_parameters.parameters["frequency"] == 440
+        assert noise_parameters.parameters["cutoff"] == 0.8
 
-    def test_parameter_info_edge_cases(self, noise_parameters):
-        """Test parameter info retrieval edge cases."""
-        # Test parameter with no range
-        info = noise_parameters.get_parameter_info("noise_type")
-        assert info["range"] is None
-        assert info["type"] == "str"
+    def test_parameter_info_retrieval(self, noise_parameters):
+        """Test parameter info retrieval."""
+        # Test parameter with range
+        info = noise_parameters.get_parameter_info("volume")
+        assert info["range"] is not None
+        assert info["type"] == "float"
+        assert info["display_name"] == "Volume"
+        assert info["description"] == "Output volume level"
+        assert info["range"]["min"] == 0.0
+        assert info["range"]["max"] == 1.0
 
         # Test nonexistent parameter
         with pytest.raises(KeyError):
@@ -110,42 +119,61 @@ class TestNoiseParameters:
 
     def test_parameter_type_validation(self, noise_parameters):
         """Test validation of different parameter types."""
-        # Test float parameter
+        # Test float parameters
         noise_parameters.update_parameters(volume=0.75)
         assert isinstance(noise_parameters.get_parameter("volume"), float)
-
-        # Test integer parameter
-        noise_parameters.update_parameters(frequency=440)
-        assert isinstance(noise_parameters.get_parameter("frequency"), int)
-
-        # Test string parameter
-        noise_parameters.update_parameters(noise_type="white")
-        assert isinstance(noise_parameters.get_parameter("noise_type"), str)
+        
+        noise_parameters.update_parameters(cutoff=0.3)
+        assert isinstance(noise_parameters.get_parameter("cutoff"), float)
+        
+        noise_parameters.update_parameters(bandwidth=0.4)
+        assert isinstance(noise_parameters.get_parameter("bandwidth"), float)
 
         # Test invalid type conversions
         with pytest.raises(ValueError):
             noise_parameters.update_parameters(volume="not a number")
         with pytest.raises(ValueError):
-            noise_parameters.update_parameters(frequency="440")  # Should be int
+            noise_parameters.update_parameters(cutoff={})  # Invalid type - dictionary
         with pytest.raises(ValueError):
-            noise_parameters.update_parameters(noise_type=123)  # Should be string
+            noise_parameters.update_parameters(bandwidth=[])  # Invalid type - list
 
     def test_parameter_range_validation(self, noise_parameters):
         """Test parameter range validation."""
-        # Test at range boundaries
+        # Test at range boundaries for volume
         noise_parameters.update_parameters(volume=0.0)  # Min value
         noise_parameters.update_parameters(volume=1.0)  # Max value
 
-        # Test slightly outside range
+        # Test slightly outside range for volume
         with pytest.raises(ValueError):
             noise_parameters.update_parameters(volume=-0.001)
         with pytest.raises(ValueError):
             noise_parameters.update_parameters(volume=1.001)
 
-        # Test frequency range
-        noise_parameters.update_parameters(frequency=20)  # Min value
-        noise_parameters.update_parameters(frequency=20000)  # Max value
+        # Test at range boundaries for cutoff
+        noise_parameters.update_parameters(cutoff=0.0)  # Min value
+        noise_parameters.update_parameters(cutoff=1.0)  # Max value
         with pytest.raises(ValueError):
-            noise_parameters.update_parameters(frequency=19)
+            noise_parameters.update_parameters(cutoff=-0.1)
         with pytest.raises(ValueError):
-            noise_parameters.update_parameters(frequency=20001)
+            noise_parameters.update_parameters(cutoff=1.1)
+
+        # Test at range boundaries for bandwidth
+        noise_parameters.update_parameters(bandwidth=0.0)  # Min value
+        noise_parameters.update_parameters(bandwidth=1.0)  # Max value
+        with pytest.raises(ValueError):
+            noise_parameters.update_parameters(bandwidth=-0.1)
+        with pytest.raises(ValueError):
+            noise_parameters.update_parameters(bandwidth=1.1)
+
+    def test_parameter_defaults(self, noise_parameters):
+        """Test that parameters initialize with correct defaults."""
+        assert noise_parameters.get_parameter("volume") == 0.5
+        assert noise_parameters.get_parameter("cutoff") == 0.5
+        assert noise_parameters.get_parameter("bandwidth") == 0.5
+
+    def test_parameter_units(self, noise_parameters):
+        """Test parameter units information."""
+        for param in ["volume", "cutoff", "bandwidth"]:
+            info = noise_parameters.get_parameter_info(param)
+            assert "units" in info
+            assert info["units"] is None  # Current parameters don't have units defined
