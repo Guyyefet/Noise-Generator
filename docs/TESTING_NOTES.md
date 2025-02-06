@@ -12,12 +12,16 @@
    - Audio Stream (test_audio_stream.py)
    - Noise Parameters (test_noise_parameters.py)
    - Observer Pattern (test_observer.py)
+   - Audio Parameter Observer (test_audio_parameter_observer.py)
+   - Processor Factory (test_processor_factory.py)
+   - Processor Registry (test_processor_registry.py)
+   - Base Strategy Implementations:
+     * XorShift Generator
+     * Bandpass Filter
 
 2. Components Needing Tests:
-   - Audio Parameter Observer
    - Audio Engine
-   - Processor Factory/Registry
-   - Strategy implementations (filters, generators)
+   - Additional Strategy Implementations (for future variants)
 
 ### Next Steps
 1. Test Structure Reorganization:
@@ -50,16 +54,17 @@
    - Update conftest.py if needed for fixture organization
 
 2. Core Component Testing:
-   - Write tests for audio_parameter_observer.py
    - Complete audio_engine.py test coverage
-   - Add processor_factory.py tests
-   - Test processor_registry.py functionality
 
 3. Strategy Testing:
-   - Test noise generation strategies
-   - Test filter implementations
-   - Add bandpass filter tests
-   - Test strategy base classes
+   - Add tests for additional noise generation strategies (beyond XorShift)
+   - Add tests for additional filter implementations (beyond Bandpass)
+   - Test any new strategy base class functionality
+   
+   Note: Basic strategy testing is already covered in unit tests:
+   - XorShift generator tested via processor factory/registry
+   - Bandpass filter tested via processor factory/registry
+   - Base class interfaces verified in existing tests
 
 4. Integration Testing:
    - Test component interactions

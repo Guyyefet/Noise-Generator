@@ -22,14 +22,16 @@ tests/
 
 ### Basic Usage
 
+Important: All commands must be run from the project root directory.
+
 Run all tests with clean output (recommended for daily use):
 ```bash
-PYTHONPATH=/home/guy/Desktop/projects/noise\ playground python run_tests.py
+PYTHONPATH=/home/guy/Desktop/projects/noise\ playground python scripts/run_tests.py
 ```
 
 Run specific test file:
 ```bash
-PYTHONPATH=/home/guy/Desktop/projects/noise\ playground python run_tests.py tests/unit/core/test_noise_parameters.py
+PYTHONPATH=/home/guy/Desktop/projects/noise\ playground python scripts/run_tests.py tests/unit/core/test_noise_parameters.py
 ```
 
 ### Output Options
@@ -38,26 +40,33 @@ PYTHONPATH=/home/guy/Desktop/projects/noise\ playground python run_tests.py test
    - Shows only failures and files with no tests
    - Ideal for quick feedback during development
    ```bash
-   python run_tests.py [test_path]
+   python scripts/run_tests.py [test_path]
    ```
 
 2. Full Output
    - Shows complete pytest output with all details
    - Useful for debugging or when you need more information
    ```bash
-   python run_tests.py [test_path] --full
+   python scripts/run_tests.py [test_path] --full
+   ```
+
+3. Coverage Report
+   - Shows detailed coverage report with missing lines
+   - Useful for identifying untested code
+   ```bash
+   python scripts/run_tests.py [test_path] --coverage
    ```
 
 ### Examples
 
 Run noise parameters tests with clean output:
 ```bash
-python run_tests.py tests/unit/core/test_noise_parameters.py
+python scripts/run_tests.py tests/unit/core/test_noise_parameters.py
 ```
 
 Run same tests with full output:
 ```bash
-python run_tests.py tests/unit/core/test_noise_parameters.py --full
+python scripts/run_tests.py tests/unit/core/test_noise_parameters.py --full
 ```
 
 ## Coverage Reports

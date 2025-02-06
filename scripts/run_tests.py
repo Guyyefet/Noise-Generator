@@ -1,23 +1,28 @@
 #!/usr/bin/env python3
+from typing import Dict, Any
+from pathlib import Path
 import subprocess
 import json
 import sys
-from typing import Dict, Any
-from pathlib import Path
 
-def run_tests(test_path: str = None, full_output: bool = False) -> None:
+def run_tests(test_path: str = None, full_output: bool = False, coverage: bool = False) -> None:
     """
     Run pytest with specified test path or all tests.
     
     Args:
         test_path: Optional path to specific test file or directory
         full_output: If True, show full pytest output
+        coverage: If True, show detailed coverage report
     """
     cmd = ["pytest", "-v"]
-    if test_path and test_path != "--full":
+    if test_path and test_path not in ["--full", "--coverage"]:
         cmd.append(test_path)
     
-    if full_output:
+    if coverage:
+        cmd.extend(["--cov=App", "--cov-report", "term-missing"])
+        result = subprocess.run(cmd)
+        sys.exit(result.returncode)
+    elif full_output:
         # Show complete pytest output
         result = subprocess.run(cmd)
         sys.exit(result.returncode)
@@ -68,23 +73,27 @@ def display_clean_output(output: Dict[str, Any]) -> None:
 
 def print_usage():
     """Print script usage information."""
-    print("Usage: python run_tests.py [test_path] [--full]")
+    print("Usage: python run_tests.py [test_path] [--full] [--coverage]")
     print("  test_path: Optional path to test file or directory")
     print("  --full: Show complete pytest output")
+    print("  --coverage: Show detailed coverage report")
     sys.exit(1)
 
 if __name__ == "__main__":
     args = sys.argv[1:]
     test_path = None
     full_output = False
+    coverage = False
     
     # Parse command line arguments
     for arg in args:
         if arg == "--full":
             full_output = True
+        elif arg == "--coverage":
+            coverage = True
         elif arg.startswith("-"):
             print_usage()
         else:
             test_path = arg
     
-    run_tests(test_path, full_output)
+    run_tests(test_path, full_output, coverage)
