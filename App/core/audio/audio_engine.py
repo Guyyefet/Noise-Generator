@@ -51,13 +51,9 @@ class AudioEngine(AudioEngineBase):
         if config is None:
             config = self.DEFAULT_CONFIG
             
-        # Initialize processor chain from config
-        self.processors = [
-            AudioProcessorFactory.create(proc["type"], **proc.get("params", {}))
-            for proc in config["processors"]
-        ]
-        
         self.parameters = {}
+        self.generator = AudioProcessorFactory.create("noise")
+        self.filter = AudioProcessorFactory.create("bandpass")  # Default filter
 
     def set_parameters(self, **parameters):
         """Set parameters for all components.
@@ -76,11 +72,15 @@ class AudioEngine(AudioEngineBase):
         Returns:
             Processed audio data
         """
-        # Start with first processor (generator)
-        audio = self.processors[0].process_audio(frames, self.parameters)
+        # Generate base noise
+        audio = self.generator.process_audio(frames, self.parameters)
         
-        # Pass through remaining processors in chain
-        for processor in self.processors[1:]:
-            audio = processor.process_audio(audio, self.parameters)
+        # Check if filter type has changed
+        filter_type = self.parameters.get("filter_type", "Bandpass").lower()
+        if not hasattr(self, '_current_filter_type') or self._current_filter_type != filter_type:
+            self.filter = AudioProcessorFactory.create(filter_type)
+            self._current_filter_type = filter_type
             
+        # Apply filter
+        audio = self.filter.process_audio(audio, self.parameters)
         return audio

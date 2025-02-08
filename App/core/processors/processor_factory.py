@@ -1,7 +1,5 @@
 from ..noise.base import NoiseGenerator
-from ..noise.implementations.xorshift import XorShiftGenerator
 from ..filters.base import FilterBase
-from ..filters.implementations.bandpass import BandpassFilter
 from typing import Type, Dict, Any, Union
 
 class AudioProcessorFactory:
@@ -35,7 +33,7 @@ class AudioProcessorFactory:
         """Create a new processor instance.
         
         Args:
-            processor_type: Type of processor to create ('noise' or 'bandpass')
+            processor_type: Type of processor to create
             **params: Parameters to pass to the processor constructor
             
         Returns:
@@ -44,13 +42,17 @@ class AudioProcessorFactory:
         Raises:
             KeyError: If processor type is not supported
         """
-        if processor_type == 'noise':
-            return XorShiftGenerator(**params)
-        elif processor_type == 'bandpass':
-            return BandpassFilter(**params)
-        else:
-            raise KeyError(f"Unknown processor type: {processor_type}")
-
-# Register default implementations
-AudioProcessorFactory.register_generator('xorshift', XorShiftGenerator)
-AudioProcessorFactory.register_filter('bandpass', BandpassFilter)
+        # Check if it's a noise generator
+        if processor_type.lower() == 'noise':
+            if not cls._noise_generators:
+                raise KeyError("No noise generators registered")
+            # Get first registered generator
+            generator_class = next(iter(cls._noise_generators.values()))
+            return generator_class(**params)
+            
+        # Check if it's a filter
+        filter_type = processor_type.lower()
+        if filter_type in cls._filters:
+            return cls._filters[filter_type](**params)
+            
+        raise KeyError(f"Unknown processor type: {processor_type}")
