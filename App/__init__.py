@@ -1,0 +1,1 @@
+"""Noise Playground application package."""

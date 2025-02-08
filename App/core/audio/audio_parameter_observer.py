@@ -1,8 +1,8 @@
-from core.observer import Observer
-from core.audio_engine import AudioEngineBase
-from core.audio_stream import AudioStream
-import logging
+from ..parameters.observer import Observer
+from .audio_engine import AudioEngineBase
+from .audio_stream import AudioStream
 from typing import Dict, Any
+import logging
 
 class AudioParameterObserver(Observer):
     """Observes GUI parameter changes and coordinates audio components."""

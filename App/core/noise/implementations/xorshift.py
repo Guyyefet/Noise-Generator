@@ -1,11 +1,16 @@
 import numpy as np
-from ..base import NoiseEngineStrategy
+from ..base import NoiseGenerator
 
-class XorShiftGenerator(NoiseEngineStrategy):
+class XorShiftGenerator(NoiseGenerator):
     """XOR shift noise generator."""
     
-    def __init__(self):
-        self.seed = 12345  # Default seed, can be overridden by parameters
+    def __init__(self, seed: int = 12345):
+        """Initialize XOR shift generator.
+        
+        Args:
+            seed: Initial seed value (default: 12345)
+        """
+        self.seed = seed
     
     def _xor_shift(self, seed: int) -> int:
         """Generate a single XOR-shift pseudorandom number."""
@@ -14,8 +19,24 @@ class XorShiftGenerator(NoiseEngineStrategy):
         seed ^= (seed << 5) & 0xFFFFFFFF
         return seed & 0xFFFFFFFF
     
+    def generate(self, frames: int) -> np.ndarray:
+        """Generate noise samples.
+        
+        Args:
+            frames: Number of frames to generate
+            
+        Returns:
+            numpy.ndarray: Generated noise samples in range [-1, 1]
+        """
+        noise = np.zeros(frames)
+        for i in range(frames):
+            self.seed = self._xor_shift(self.seed)
+            # Normalize to range [-1, 1]
+            noise[i] = (self.seed / 0x7FFFFFFF) - 1.0
+        return noise
+        
     def process_audio(self, frames_or_audio: int | np.ndarray, parameters: dict) -> np.ndarray:
-        """Generate or process audio using XOR shift.
+        """Generate or process audio.
         
         Args:
             frames_or_audio: Number of frames to generate (int) or audio data to process (np.ndarray)
@@ -26,17 +47,10 @@ class XorShiftGenerator(NoiseEngineStrategy):
             Generated or processed audio data
         """
         if isinstance(frames_or_audio, int):
-            # Generate new noise
-            frames = frames_or_audio
+            # Update seed if provided in parameters
             if parameters is not None:
-                # Update seed if provided in parameters
                 self.seed = parameters.get('seed', self.seed)
-            noise = np.zeros(frames)
-            for i in range(frames):
-                self.seed = self._xor_shift(self.seed)
-                # Normalize to range [-1, 1]
-                noise[i] = (self.seed / 0x7FFFFFFF) - 1.0
-            return noise
+            return self.generate(frames_or_audio)
         else:
             # Pass through audio unchanged (generators only modify new audio)
             return frames_or_audio

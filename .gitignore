@@ -1,5 +1,24 @@
+# Python
 __pycache__/
-legacy_files/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
 venv/
+.env/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project specific
+legacy_files/
 set_env.sh

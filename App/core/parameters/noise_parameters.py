@@ -1,5 +1,5 @@
-from core.observer import Subject
-from core.parameter_definitions import get_registry
+from .observer import Subject
+from .parameter_definitions import get_registry
 from typing import Any, Dict, Optional
 
 class NoiseParameters(Subject):

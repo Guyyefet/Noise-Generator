@@ -24,6 +24,36 @@
     - base.py     # Base filter interface
     - bandpass.py # Bandpass filter implementation
 
+### Filter Implementations
+
+#### Low-Pass Filter Evolution
+We've experimented with several low-pass filter implementations:
+
+1. Simple One-Pole Cascade:
+   - Basic IIR filter: y[n] = alpha * x[n] + (1-alpha) * y[n-1]
+   - Cascaded multiple times for steeper slopes
+   - Simple but less precise frequency control
+
+2. Butterworth with Bilinear Transform:
+   - Proper pole placement for maximally flat response
+   - Used bilinear transform for coefficient calculation
+   - More mathematically correct but complex implementation
+   - Challenges with DC offset and stability
+
+3. Cascaded One-Pole with Progressive Scaling (Current):
+   - Enhanced one-pole design with progressive coefficient scaling
+   - Resonance feedback on final stage
+   - Balanced between simplicity and effectiveness
+   - Features:
+     * Variable pole count (6dB to 24dB/octave)
+     * Resonance control at cutoff frequency
+     * DC offset compensation
+     * Adaptive gain compensation
+   - Trade-offs:
+     * Not mathematically perfect attenuation
+     * But good enough for practical audio use
+     * Simple, efficient implementation
+
 ### Core Components
 - NoiseGenerator (Strategy):
   - Abstract base class for noise generation
@@ -47,8 +77,6 @@
 4. Volume Control
 5. Clip Protection
 
-## Future Ideas
-
 ### Audio Engine Improvements
 - Re-enable colored noise with improved implementation
 - Improve low frequency response with either:
@@ -63,11 +91,6 @@
      - Implement gentler high-pass filter slope
      - Pros: More natural frequency response, better precision at low frequencies
      - Cons: Requires significant filter implementation changes
-
-### TODO
-- Add more generator types (e.g., colored noise)
-- Implement additional filter types
-- Add preset management system
 
 ## Refactoring Plan: Making the System More Flexible
 
@@ -91,14 +114,39 @@
    - Clear parameter contracts
 
 ### Phase 2: Dynamic Component System
-1. Create Component Factories
+1. Create Component Factories and Simplify Structure
    - Implement AudioStrategyFactory
    - Set up component registries
    - Create factory methods for each component type
+   - Simplify component hierarchy:
+     ```
+     App/core/
+     ├── filters/
+     │   ├── base.py
+     │   │   └── class FilterBase:
+     │   │       - Parameter validation
+     │   │       - Common filter operations
+     │   │       - Audio processing interface
+     │   └── implementations/
+     │       └── bandpass.py
+     │           └── class BandpassFilter(FilterBase)
+     └── noise/
+         ├── base.py
+         │   └── class NoiseGeneratorBase:
+         │       - Parameter validation
+         │       - Common generator operations
+         │       - Sample generation interface
+         └── implementations/
+             └── xorshift.py
+                 └── class XorShiftGenerator(NoiseGeneratorBase)
+     ```
    Benefits:
    - Easy addition of new generators/filters
    - Clean component instantiation
    - Better separation of concerns
+   - Clearer inheritance hierarchy
+   - Domain-specific base classes
+   - More intuitive code organization
 
 2. Implement Processing Chain
    - Create AudioChain class
@@ -110,23 +158,9 @@
    - Better audio pipeline control
 
 ### Phase 3: Advanced Features
-1. Add Preset System
-   - Implement PresetManager
-   - Add save/load functionality
-   - Create preset file format
-   Benefits:
-   - User-saveable configurations
-   - Shareable presets
-   - Quick parameter switching
-
-2. Enhance GUI Integration
+   Enhance GUI Integration:
    - Update GUI for dynamic parameters
    - Add component controls
-   - Implement preset UI
-   Benefits:
-   - Better user experience
-   - Visual feedback for all features
-   - Intuitive preset management
 
 ### Current Implementation Status (as of commit 308abd0)
 
@@ -174,74 +208,3 @@
 - Feature flags for new capabilities
 - Fallback paths for critical features
 - Gradual rollout of changes
-
-## Testing
-
-Let's create a step-by-step plan for implementing tests for your QT + sounddevice noise generator app:
-Phase 1: Local Test Setup
-
-Set up test environment
-
-Install pytest and pytest-qt
-Create requirements-dev.txt for test dependencies
-Set up pytest.ini configuration
-Create basic test structure in /tests
-
-
-Unit Tests (Start Locally)
-
-Test QT widgets
-
-Button clicks
-Slider movements
-Signal/slot connections
-
-
-Test sound processing
-
-Basic signal generation
-Parameter validation
-Data transformations
-
-
-
-
-Integration Tests (Local First)
-
-GUI and sound engine interaction
-Audio stream handling
-Real-time parameter updates
-
-
-Real Device Tests (Local Only)
-
-Actual audio output tests
-Latency measurements
-Hardware compatibility checks
-Performance benchmarks
-
-
-
-Phase 2: CI Implementation
-
-Basic CI Setup
-
-Create GitHub Actions workflow
-Install system dependencies (Qt, sounddevice)
-Configure test environment
-
-
-Adapt Tests for CI
-
-Modify sounddevice tests to use null device
-Add mocks for hardware-dependent functions
-Skip tests that require real audio hardware
-Add appropriate test markers
-
-
-Test Categories in CI:
-
-Unit tests with mocked audio
-GUI tests with PyTestQT
-Integration tests with null device
-Code coverage reporting

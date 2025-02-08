@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout
 from PyQt6.QtCore import QTimer
 import pyqtgraph as pg
 import numpy as np
-from core.observer import Observer
+from core.parameters.observer import Observer
 
 class WaveformView(QWidget, Observer):
     """Widget for displaying frequency domain analysis and filter response."""

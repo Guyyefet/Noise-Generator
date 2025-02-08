@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout
-from core.noise_parameters import NoiseParameters
+from core.parameters.noise_parameters import NoiseParameters
 from gui.PyQt_gui import NoiseControlsWidget
 from gui.waveform_view import WaveformView
 
