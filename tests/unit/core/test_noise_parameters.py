@@ -177,3 +177,45 @@ class TestNoiseParameters:
             info = noise_parameters.get_parameter_info(param)
             assert "units" in info
             assert info["units"] is None  # Current parameters don't have units defined
+
+    def test_parameter_persistence_across_filter_switch(self, noise_parameters):
+        """Test that common parameters persist when switching between filters."""
+        # Set initial parameters for bandpass
+        noise_parameters.update_parameters(
+            filter_type="Bandpass",
+            cutoff=0.7,
+            bandwidth=0.3,
+            volume=0.8
+        )
+        
+        # Verify bandpass parameters are set
+        assert noise_parameters.get_parameter("filter_type") == "Bandpass"
+        assert noise_parameters.get_parameter("cutoff") == 0.7
+        assert noise_parameters.get_parameter("bandwidth") == 0.3
+        assert noise_parameters.get_parameter("volume") == 0.8
+        
+        # Switch to lowpass, keeping common parameters
+        noise_parameters.update_parameters(
+            filter_type="Lowpass",
+            resonance=0.4,
+            poles=2
+        )
+        
+        # Verify common parameters persisted
+        assert noise_parameters.get_parameter("filter_type") == "Lowpass"
+        assert noise_parameters.get_parameter("cutoff") == 0.7  # Should persist
+        assert noise_parameters.get_parameter("volume") == 0.8  # Should persist
+        assert noise_parameters.get_parameter("resonance") == 0.4
+        assert noise_parameters.get_parameter("poles") == 2
+        
+        # Switch back to bandpass
+        noise_parameters.update_parameters(
+            filter_type="Bandpass",
+            bandwidth=0.5
+        )
+        
+        # Verify common parameters still persist
+        assert noise_parameters.get_parameter("filter_type") == "Bandpass"
+        assert noise_parameters.get_parameter("cutoff") == 0.7  # Should still persist
+        assert noise_parameters.get_parameter("volume") == 0.8  # Should still persist
+        assert noise_parameters.get_parameter("bandwidth") == 0.5
