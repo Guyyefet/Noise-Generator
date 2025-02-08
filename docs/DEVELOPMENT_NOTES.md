@@ -24,6 +24,36 @@
     - base.py     # Base filter interface
     - bandpass.py # Bandpass filter implementation
 
+### Filter Implementations
+
+#### Low-Pass Filter Evolution
+We've experimented with several low-pass filter implementations:
+
+1. Simple One-Pole Cascade:
+   - Basic IIR filter: y[n] = alpha * x[n] + (1-alpha) * y[n-1]
+   - Cascaded multiple times for steeper slopes
+   - Simple but less precise frequency control
+
+2. Butterworth with Bilinear Transform:
+   - Proper pole placement for maximally flat response
+   - Used bilinear transform for coefficient calculation
+   - More mathematically correct but complex implementation
+   - Challenges with DC offset and stability
+
+3. Cascaded One-Pole with Progressive Scaling (Current):
+   - Enhanced one-pole design with progressive coefficient scaling
+   - Resonance feedback on final stage
+   - Balanced between simplicity and effectiveness
+   - Features:
+     * Variable pole count (6dB to 24dB/octave)
+     * Resonance control at cutoff frequency
+     * DC offset compensation
+     * Adaptive gain compensation
+   - Trade-offs:
+     * Not mathematically perfect attenuation
+     * But good enough for practical audio use
+     * Simple, efficient implementation
+
 ### Core Components
 - NoiseGenerator (Strategy):
   - Abstract base class for noise generation
