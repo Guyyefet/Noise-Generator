@@ -13,10 +13,19 @@ class TestCascadedOnePoleLowPassV2:
         assert isinstance(filter, CascadedOnePoleLowPassV2)
         assert len(filter.prev_y) == 4
         assert all(y == 0.0 for y in filter.prev_y)
+        # Verify float32 precision
+        assert filter.prev_y.dtype == np.float32
+    
+    def test_float32_precision(self, filter):
+        """Test that filter maintains float32 precision throughout."""
+        input_signal = np.ones(100, dtype=np.float32)
+        output = filter.process_audio(input_signal, {})
+        assert output.dtype == np.float32
+        assert filter.prev_y.dtype == np.float32
     
     def test_default_parameters(self, filter):
         """Test filter behavior with default parameters."""
-        input_signal = np.array([1.0, -1.0, 1.0, -1.0])
+        input_signal = np.array([1.0, -1.0, 1.0, -1.0], dtype=np.float32)
         output = filter.process_audio(input_signal, {})
         
         assert isinstance(output, np.ndarray)
@@ -29,7 +38,7 @@ class TestCascadedOnePoleLowPassV2:
     
     def test_parameter_ranges(self, filter):
         """Test filter with various parameter values."""
-        input_signal = np.sin(np.linspace(0, 4*np.pi, 1000))
+        input_signal = np.sin(np.linspace(0, 4*np.pi, 1000, dtype=np.float32))
         
         # Test extreme parameter values
         params = [
@@ -45,7 +54,7 @@ class TestCascadedOnePoleLowPassV2:
     
     def test_pole_count_validation(self, filter):
         """Test that pole count is properly validated."""
-        input_signal = np.array([1.0, -1.0, 1.0, -1.0])
+        input_signal = np.array([1.0, -1.0, 1.0, -1.0], dtype=np.float32)
         
         # Test invalid pole counts
         invalid_poles = [0, 5, -1]
@@ -56,7 +65,7 @@ class TestCascadedOnePoleLowPassV2:
     def test_filter_state_persistence(self, filter):
         """Test that filter state is maintained between calls."""
         # Process first chunk with different pole counts
-        chunk1 = np.array([1.0, -1.0, 1.0])
+        chunk1 = np.array([1.0, -1.0, 1.0], dtype=np.float32)
         
         for poles in range(1, 5):
             # Process first chunk
@@ -66,7 +75,7 @@ class TestCascadedOnePoleLowPassV2:
             prev_y = filter.prev_y.copy()
             
             # Process second chunk
-            chunk2 = np.array([-1.0, 1.0, -1.0])
+            chunk2 = np.array([-1.0, 1.0, -1.0], dtype=np.float32)
             out2 = filter.process_audio(chunk2, {'poles': poles})
             
             # Verify states changed
@@ -75,10 +84,10 @@ class TestCascadedOnePoleLowPassV2:
     def test_frequency_response(self, filter):
         """Test frequency response characteristics for different pole counts."""
         # Generate test signal with mixed frequencies
-        t = np.linspace(0, 1, 1000)
+        t = np.linspace(0, 1, 1000, dtype=np.float32)
         low_freq = np.sin(2 * np.pi * 10 * t)   # 10 Hz
         high_freq = np.sin(2 * np.pi * 100 * t)  # 100 Hz
-        mixed = low_freq + high_freq
+        mixed = (low_freq + high_freq).astype(np.float32)
         
         outputs = []
         
@@ -101,33 +110,63 @@ class TestCascadedOnePoleLowPassV2:
     def test_resonance_behavior(self, filter):
         """Test resonance behavior at cutoff frequency."""
         # Generate sine sweep around cutoff
-        t = np.linspace(0, 2, 2000)
-        sweep = np.sin(2 * np.pi * (10 + 5 * t) * t)  # Sweep from 10-20 Hz
+        t = np.linspace(0, 2, 2000, dtype=np.float32)
+        sweep = np.sin(2 * np.pi * (10 + 5 * t) * t)
         
-        # Test with and without resonance
-        no_res = filter.process_audio(sweep, {
-            'cutoff': 0.5,
-            'resonance': 0.0,
-            'poles': 4
-        })
-        
-        with_res = filter.process_audio(sweep, {
-            'cutoff': 0.5,
-            'resonance': 0.9,
-            'poles': 4
-        })
-        
+        # Test with increasing resonance
+        outputs = []
+        resonances = [0.0, 0.5, 0.9, 1.0]
+        for res in resonances:
+            output = filter.process_audio(sweep, {
+                'cutoff': 0.5,
+                'resonance': res,
+                'poles': 4
+            })
+            outputs.append(output)
+            
         # Calculate RMS values
-        no_res_rms = np.sqrt(np.mean(no_res**2))
-        with_res_rms = np.sqrt(np.mean(with_res**2))
+        rms_values = [np.sqrt(np.mean(out**2)) for out in outputs]
         
-        # Resonance should increase output amplitude
-        assert with_res_rms > no_res_rms
+        # Check increasing resonance leads to increasing output levels
+        for i in range(1, len(rms_values)):
+            assert rms_values[i] > rms_values[i-1]
+            
+        # Test self-oscillation at max resonance
+        max_res_output = filter.process_audio(np.zeros(1000, dtype=np.float32), {
+            'cutoff': 0.5,
+            'resonance': 1.0,
+            'poles': 4
+        })
+        
+        # Should have significant output even with zero input
+        assert np.max(np.abs(max_res_output)) > 0.1
+    
+    def test_volume_scaling(self, filter):
+        """Test volume scaling with different pole counts."""
+        # Generate test signal
+        t = np.linspace(0, 1, 1000, dtype=np.float32)
+        input_signal = np.sin(2 * np.pi * 10 * t)
+        
+        # Test output levels for different pole counts
+        base_rms = None
+        for poles in range(1, 5):
+            output = filter.process_audio(input_signal, {
+                'cutoff': 0.5,
+                'poles': poles
+            })
+            
+            rms = np.sqrt(np.mean(output**2))
+            
+            if base_rms is None:
+                base_rms = rms
+            else:
+                # Output level should stay within 3dB (factor of ~0.7-1.4)
+                assert 0.7 * base_rms <= rms <= 1.4 * base_rms
     
     def test_dc_offset(self, filter):
         """Test that filter doesn't introduce DC offset."""
         # Create test signal with zero mean
-        t = np.linspace(0, 1, 1000)
+        t = np.linspace(0, 1, 1000, dtype=np.float32)
         input_signal = np.sin(2 * np.pi * 10 * t)
         assert abs(np.mean(input_signal)) < 1e-10  # Verify input has no DC
         
