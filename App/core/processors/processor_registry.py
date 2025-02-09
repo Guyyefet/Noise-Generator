@@ -3,7 +3,8 @@
 from .processor_factory import AudioProcessorFactory
 from ..noise.implementations.xorshift import XorShiftGenerator
 from ..filters.implementations.bandpass import BandpassFilter
-from ..filters.implementations.cascaded_onepole_lowpass import LowPassFilter
+from ..filters.implementations.cascaded_onepole_lowpass_v2 import CascadedOnePoleLowPassV2
+from ..filters.implementations.cascaded_onepole_lowpass import CascadedOnePoleLowPass
 
 def register_processors():
     """Register all available processor types with the factory."""
@@ -13,4 +14,5 @@ def register_processors():
     
     # Register filters
     AudioProcessorFactory.register_filter("bandpass", BandpassFilter)
-    AudioProcessorFactory.register_filter("lowpass", LowPassFilter)
+    AudioProcessorFactory.register_filter("cascaded", CascadedOnePoleLowPass)
+    AudioProcessorFactory.register_filter("cascaded_v2", CascadedOnePoleLowPassV2)

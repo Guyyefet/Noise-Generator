@@ -3,6 +3,7 @@ from PyQt6.QtCore import QTimer
 import pyqtgraph as pg
 import numpy as np
 from core.parameters.observer import Observer
+from core.visualization.implementations import BandpassResponseVisualizer, CascadedLowpassResponseV2Visualizer, CascadedLowpassResponseVisualizer
 
 class WaveformView(QWidget, Observer):
     """Widget for displaying frequency domain analysis and filter response."""
@@ -19,9 +20,14 @@ class WaveformView(QWidget, Observer):
         self.sample_rate = 44100
         self.freq_data = np.fft.rfftfreq(self.buffer_size, d=1.0/self.sample_rate)
         
-        # Filter parameters
-        self.cutoff_freq = 1000  # Default cutoff frequency
-        self.bandwidth = 0.5     # Default bandwidth
+        # Filter visualization
+        self.filter_visualizers = {
+            'bandpass': BandpassResponseVisualizer(),
+            'cascaded': CascadedLowpassResponseVisualizer(),
+            'cascaded_v2': CascadedLowpassResponseV2Visualizer()
+        }
+        self.current_visualizer = self.filter_visualizers['bandpass']  # Default
+        self.current_parameters = {}
         
         # Set up update timer
         self.update_timer = QTimer()
@@ -116,17 +122,13 @@ class WaveformView(QWidget, Observer):
     
     def update(self, parameters: dict):
         """Update from NoiseParameters (Observer pattern)."""
-        # Get parameters with defaults
-        cutoff = parameters.get('cutoff', 0.5)
-        bandwidth = parameters.get('bandwidth', 0.5)
+        # Store parameters
+        self.current_parameters = parameters.copy()
         
-        # Map cutoff from 0-1 to center frequency (20Hz-20kHz)
-        self.center_freq = 20 * (20000/20)**cutoff
-        
-        # Map bandwidth to octave spread
-        min_spread = 0.5  # minimum 1/2 octave
-        max_spread = 4.0  # maximum 4 octaves
-        self.octave_spread = min_spread + bandwidth * (max_spread - min_spread)
+        # Update current visualizer based on filter type
+        filter_type = parameters.get('filter_type', 'bandpass').lower()
+        if filter_type in self.filter_visualizers:
+            self.current_visualizer = self.filter_visualizers[filter_type]
         
         self._update_filter_response()
     
@@ -135,15 +137,8 @@ class WaveformView(QWidget, Observer):
         # Generate frequency response points
         freqs = np.logspace(np.log10(20), np.log10(20000), 1000)
         
-        # Calculate bandpass response in octaves
-        octaves_from_center = np.abs(np.log2(freqs/self.center_freq))
-        
-        # Create smooth bandpass shape with steeper falloff
-        response = np.exp(-2.0 * (octaves_from_center/self.octave_spread)**2)
-        
-        # Convert to dB with proper range (+6dB peak)
-        response_db = 6 - 12 * (1 - response)  # Peak at +6dB, min at -60dB
-        response_db = np.clip(response_db, -60, 24)
+        # Calculate response using current visualizer
+        response_db = self.current_visualizer.calculate_response(freqs, self.current_parameters)
         
         # Update filter curve
         self.filter_curve.setData(freqs, response_db)

@@ -76,7 +76,7 @@ class AudioEngine(AudioEngineBase):
         audio = self.generator.process_audio(frames, self.parameters)
         
         # Check if filter type has changed
-        filter_type = self.parameters.get("filter_type", "Bandpass").lower()
+        filter_type = self.parameters.get("filter_type", "bandpass")
         if not hasattr(self, '_current_filter_type') or self._current_filter_type != filter_type:
             self.filter = AudioProcessorFactory.create(filter_type)
             self._current_filter_type = filter_type

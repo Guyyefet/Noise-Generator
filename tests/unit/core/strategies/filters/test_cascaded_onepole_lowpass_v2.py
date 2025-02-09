@@ -1,20 +1,17 @@
 import pytest
 import numpy as np
-from App.core.filters.implementations.cascaded_onepole_lowpass import LowPassFilter
+from App.core.filters.implementations.cascaded_onepole_lowpass_v2 import CascadedOnePoleLowPassV2
 
-class TestCascadedOnePoleLowPass:
+class TestCascadedOnePoleLowPassV2:
     @pytest.fixture
     def filter(self):
         """Create a fresh filter instance for each test."""
-        return LowPassFilter()
+        return CascadedOnePoleLowPassV2()
     
     def test_initialization(self, filter):
         """Test filter initializes with zeroed states."""
-        assert isinstance(filter, LowPassFilter)
-        # Should have state arrays for max possible poles
-        assert len(filter.prev_x) == 4
+        assert isinstance(filter, CascadedOnePoleLowPassV2)
         assert len(filter.prev_y) == 4
-        assert all(x == 0.0 for x in filter.prev_x)
         assert all(y == 0.0 for y in filter.prev_y)
     
     def test_default_parameters(self, filter):
@@ -66,7 +63,6 @@ class TestCascadedOnePoleLowPass:
             out1 = filter.process_audio(chunk1, {'poles': poles})
             
             # Save filter states
-            prev_x = filter.prev_x.copy()
             prev_y = filter.prev_y.copy()
             
             # Process second chunk
@@ -74,8 +70,7 @@ class TestCascadedOnePoleLowPass:
             out2 = filter.process_audio(chunk2, {'poles': poles})
             
             # Verify states changed
-            assert not np.allclose(filter.prev_x[:poles], prev_x[:poles]) or \
-                   not np.allclose(filter.prev_y[:poles], prev_y[:poles])
+            assert not np.allclose(filter.prev_y[:poles], prev_y[:poles])
     
     def test_frequency_response(self, filter):
         """Test frequency response characteristics for different pole counts."""
@@ -85,7 +80,7 @@ class TestCascadedOnePoleLowPass:
         high_freq = np.sin(2 * np.pi * 100 * t)  # 100 Hz
         mixed = low_freq + high_freq
         
-        prev_high_attenuation = 0
+        outputs = []
         
         # Test increasing attenuation with more poles
         for poles in range(1, 5):
@@ -93,17 +88,15 @@ class TestCascadedOnePoleLowPass:
                 'cutoff': 0.3,  # Set cutoff below high frequency
                 'poles': poles
             })
-            
-            # Calculate RMS of high frequency content in output
-            # Using a simple method - in practice might want to use FFT
-            high_freq_output = output - np.sin(2 * np.pi * 10 * t)  # Remove low freq
-            high_attenuation = np.sqrt(np.mean(high_freq_output**2))
+            outputs.append(output)
             
             if poles > 1:
+                # Calculate RMS of high frequency content
+                curr_high = np.sqrt(np.mean((output - low_freq)**2))
+                prev_high = np.sqrt(np.mean((outputs[-2] - low_freq)**2))
+                
                 # Each additional pole should increase attenuation
-                assert high_attenuation < prev_high_attenuation
-            
-            prev_high_attenuation = high_attenuation
+                assert curr_high < prev_high
     
     def test_resonance_behavior(self, filter):
         """Test resonance behavior at cutoff frequency."""
