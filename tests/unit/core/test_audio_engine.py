@@ -175,9 +175,11 @@ class TestAudioEngine:
         engine = AudioEngine(config)
         assert len(engine.processors) == 0
         
-        # Should handle empty chain gracefully
-        with pytest.raises(IndexError):
-            engine.generate_noise(100)
+        # Should handle empty chain gracefully by returning zeros
+        output = engine.generate_noise(100)
+        assert isinstance(output, np.ndarray)
+        assert len(output) == 100
+        assert np.all(output == 0)
 
     def test_audio_output_bounds(self, mock_factory):
         """Test that generated audio stays within [-1, 1] bounds."""
