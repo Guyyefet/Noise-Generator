@@ -2,117 +2,38 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional, Type, Union, List
 from enum import Enum
 
-class ParameterType(Enum):
-    """Supported parameter types."""
-    FLOAT = "float"
-    INT = "int"
-    BOOL = "bool"
-    STR = "str"
-
 @dataclass
-class Range:
+class ParameterRange:
     """Defines a valid range for numeric parameters."""
     min_value: Union[float, int]
     max_value: Union[float, int]
 
-@dataclass
-class ParameterDefinition:
-    """Defines a parameter's properties and validation rules."""
-    name: str
-    param_type: ParameterType
-    default_value: Any
-    description: str
-    range: Optional[Range] = None
-    units: Optional[str] = None
-    display_name: Optional[str] = None
-    
-    def __post_init__(self):
-        """Validate the definition on creation."""
-        self._validate_default_value()
-        if self.range:
-            self._validate_range()
-    
-    def _validate_default_value(self):
-        """Ensure default value matches the parameter type."""
-        type_map = {
-            ParameterType.FLOAT: float,
-            ParameterType.INT: int,
-            ParameterType.BOOL: bool,
-            ParameterType.STR: str
-        }
-        expected_type = type_map[self.param_type]
-        if not isinstance(self.default_value, expected_type):
-            raise ValueError(
-                f"Default value {self.default_value} does not match type {self.param_type}"
-            )
-    
-    def _validate_range(self):
-        """Validate range if specified."""
-        if self.param_type not in (ParameterType.FLOAT, ParameterType.INT):
-            raise ValueError("Range can only be specified for numeric parameters")
-        if self.range.min_value >= self.range.max_value:
-            raise ValueError("Range min_value must be less than max_value")
-        if not (self.range.min_value <= self.default_value <= self.range.max_value):
-            raise ValueError("Default value must be within specified range")
-
-    def validate_value(self, value: Any) -> Any:
-        """
-        Validate and potentially convert a value according to this definition.
-        
-        Args:
-            value: Value to validate
-            
-        Returns:
-            Validated and potentially converted value
-            
-        Raises:
-            ValueError: If value is invalid
-        """
-        # Convert to correct type
-        type_map = {
-            ParameterType.FLOAT: float,
-            ParameterType.INT: int,
-            ParameterType.BOOL: bool,
-            ParameterType.STR: str
-        }
-        try:
-            value = type_map[self.param_type](value)
-        except (ValueError, TypeError):
-            raise ValueError(
-                f"Cannot convert {value} to type {self.param_type}"
-            )
-        
-        # Check range if applicable
-        if self.range and self.param_type in (ParameterType.FLOAT, ParameterType.INT):
-            if not (self.range.min_value <= value <= self.range.max_value):
-                raise ValueError(
-                    f"Value {value} outside valid range "
-                    f"[{self.range.min_value}, {self.range.max_value}]"
-                )
-        
-        return value
+    def validate_value(self, value: Union[float, int]) -> bool:
+        """Check if a value is within the range."""
+        return self.min_value <= value <= self.max_value
 
 class ParameterRegistry:
     """Central registry for parameter definitions."""
     
     def __init__(self):
-        self._definitions: Dict[str, ParameterDefinition] = {}
+        self._definitions: Dict[str, Dict[str, Any]] = {}
     
-    def register(self, definition: ParameterDefinition):
+    def register(self, name: str, definition: Dict[str, Any]):
         """
         Register a parameter definition.
         
         Args:
-            definition: Parameter definition to register
+            name: Parameter name
+            definition: Parameter definition dictionary
             
         Raises:
             ValueError: If parameter name already registered
         """
-        if definition.name in self._definitions:
-            raise ValueError(f"Parameter {definition.name} already registered")
-        self._definitions[definition.name] = definition
+        if name in self._definitions:
+            raise ValueError(f"Parameter {name} already registered")
+        self._definitions[name] = definition
     
-    def get_definition(self, name: str) -> ParameterDefinition:
+    def get_definition(self, name: str) -> Dict[str, Any]:
         """
         Get a parameter definition by name.
         
@@ -120,7 +41,7 @@ class ParameterRegistry:
             name: Parameter name
             
         Returns:
-            Parameter definition
+            Parameter definition dictionary
             
         Raises:
             KeyError: If parameter not found
@@ -147,16 +68,36 @@ class ParameterRegistry:
         for name, value in parameters.items():
             if name not in self._definitions:
                 raise KeyError(f"Unknown parameter: {name}")
-            validated[name] = self._definitions[name].validate_value(value)
+                
+            definition = self._definitions[name]
+            
+            # Type validation
+            if definition["type"] == "float" and not isinstance(value, (int, float)):
+                raise TypeError(f"Parameter '{name}' must be a number")
+            elif definition["type"] == "int" and not isinstance(value, int):
+                raise TypeError(f"Parameter '{name}' must be an integer")
+            elif definition["type"] == "enum" and value not in definition["enum_values"]:
+                raise ValueError(f"Invalid value for enum parameter '{name}': {value}")
+                
+            # Range validation
+            if definition["range"]:
+                if not definition["range"].validate_value(value):
+                    raise ValueError(
+                        f"Parameter '{name}' value {value} is outside valid range "
+                        f"[{definition['range'].min_value}, {definition['range'].max_value}]"
+                    )
+            
+            validated[name] = value
+            
         return validated
     
     def get_defaults(self) -> Dict[str, Any]:
         """Get dictionary of default values for all registered parameters."""
         return {
-            name: definition.default_value 
+            name: definition["default_value"]
             for name, definition in self._definitions.items()
         }
     
-    def get_all_definitions(self) -> List[ParameterDefinition]:
-        """Get list of all registered parameter definitions."""
-        return list(self._definitions.values())
+    def get_parameters(self) -> Dict[str, Dict[str, Any]]:
+        """Get dictionary of all registered parameter definitions."""
+        return self._definitions.copy()

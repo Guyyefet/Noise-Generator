@@ -34,7 +34,7 @@ class AudioEngine(AudioEngineBase):
     
     DEFAULT_CONFIG = {
         "processors": [
-            {"type": "noise"},
+            {"type": "xorshift"},  # Use specific registered processor name
             {"type": "bandpass"}
         ]
     }
@@ -43,17 +43,22 @@ class AudioEngine(AudioEngineBase):
         """Initialize audio engine with configurable components.
         
         Args:
-            config: Configuration dictionary specifying:
-                   - generator: Type of noise generator to use
-                   - filters: List of filter types to apply in order
+            config: Configuration dictionary specifying processors
                    If None, uses DEFAULT_CONFIG.
         """
         if config is None:
             config = self.DEFAULT_CONFIG
             
         self.parameters = {}
-        self.generator = AudioProcessorFactory.create("noise")
-        self.filter = AudioProcessorFactory.create("bandpass")  # Default filter
+        self.processors = []
+        
+        # Initialize processors from config
+        for processor_config in config.get("processors", []):
+            processor = AudioProcessorFactory.create(
+                processor_config["type"],
+                **processor_config.get("params", {})
+            )
+            self.processors.append(processor)
 
     def set_parameters(self, **parameters):
         """Set parameters for all components.
@@ -72,15 +77,14 @@ class AudioEngine(AudioEngineBase):
         Returns:
             Processed audio data
         """
-        # Generate base noise
-        audio = self.generator.process_audio(frames, self.parameters)
-        
-        # Check if filter type has changed
-        filter_type = self.parameters.get("filter_type", "Bandpass").lower()
-        if not hasattr(self, '_current_filter_type') or self._current_filter_type != filter_type:
-            self.filter = AudioProcessorFactory.create(filter_type)
-            self._current_filter_type = filter_type
+        if not self.processors:
+            return np.zeros(frames)
             
-        # Apply filter
-        audio = self.filter.process_audio(audio, self.parameters)
+        # Start with first processor
+        audio = self.processors[0].process_audio(frames, self.parameters)
+        
+        # Process through remaining processors
+        for processor in self.processors[1:]:
+            audio = processor.process_audio(audio, self.parameters)
+            
         return audio

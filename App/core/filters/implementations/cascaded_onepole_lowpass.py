@@ -1,7 +1,7 @@
 from ..base import FilterBase
 import numpy as np
 
-class LowPassFilter(FilterBase):
+class CascadedOnePoleLowPass(FilterBase):
     """Low-pass filter implementation with variable pole count and resonance."""
     
     def __init__(self):

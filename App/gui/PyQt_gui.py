@@ -63,7 +63,7 @@ class NoiseControlsWidget(QWidget):
         filter_label = QLabel("Filter Type")
         layout.addWidget(filter_label)
         self.filter_combo = QComboBox()
-        self.filter_combo.addItems(["Bandpass", "Lowpass"])
+        self.filter_combo.addItems(["bandpass", "cascaded", "cascaded_v2"])
         self.filter_combo.currentTextChanged.connect(self._on_selection_changed)
         layout.addWidget(self.filter_combo)
 
@@ -81,8 +81,9 @@ class NoiseControlsWidget(QWidget):
         
         # Define filter-specific parameters
         filter_params = {
-            "Bandpass": ["bandwidth"],
-            "Lowpass": ["resonance", "poles"]
+            "bandpass": ["bandwidth"],
+            "cascaded": ["resonance", "poles"],
+            "cascaded_v2": ["resonance", "poles"]
         }
         
         # Common parameters for all filters

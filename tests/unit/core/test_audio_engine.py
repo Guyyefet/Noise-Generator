@@ -31,7 +31,7 @@ class TestAudioEngine:
             # Configure factory to return our mock processors
             # Configure factory to return our mock processors
             def create_processor(proc_type, **kwargs):
-                if proc_type == 'noise':
+                if proc_type == 'xorshift' or proc_type == 'noise':
                     return generator
                 elif proc_type == 'bandpass':
                     return filter
@@ -46,7 +46,7 @@ class TestAudioEngine:
         
         # Verify factory called correctly
         assert mock_factory.create.call_count == 2
-        mock_factory.create.assert_any_call('noise')
+        mock_factory.create.assert_any_call('xorshift')
         mock_factory.create.assert_any_call('bandpass')
         
         # Verify processors initialized
@@ -175,9 +175,11 @@ class TestAudioEngine:
         engine = AudioEngine(config)
         assert len(engine.processors) == 0
         
-        # Should handle empty chain gracefully
-        with pytest.raises(IndexError):
-            engine.generate_noise(100)
+        # Should handle empty chain gracefully by returning zeros
+        output = engine.generate_noise(100)
+        assert isinstance(output, np.ndarray)
+        assert len(output) == 100
+        assert np.all(output == 0)
 
     def test_audio_output_bounds(self, mock_factory):
         """Test that generated audio stays within [-1, 1] bounds."""
