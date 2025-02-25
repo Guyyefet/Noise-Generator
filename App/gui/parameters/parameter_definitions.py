@@ -1,6 +1,6 @@
-from .parameter_system import ParameterRegistry
-from .parameter_builder import ParameterDefinitionBuilder as Param
-from .common_parameters import COMMON_PARAMS
+from core.parameters.parameter_system import ParameterRegistry
+from core.parameters.parameter_builder import ParameterDefinitionBuilder as Param
+from core.parameters.common_parameters import COMMON_PARAMS
 
 # Global registry instance
 registry = ParameterRegistry()

@@ -1,8 +1,9 @@
 from core.audio.audio_engine import AudioEngine
 from core.audio.audio_stream import AudioStream
 from core.audio.audio_parameter_observer import AudioParameterObserver
-from core.parameters.noise_parameters import NoiseParameters
+from core.parameters.parameter_registry import ParameterRegistry
 from core.processors.processor_registry import register_processors
+from core.processors.processor_factory import AudioProcessorFactory
 from gui.main_window import MainWindow
 from PyQt6.QtWidgets import QApplication
 import signal
@@ -24,17 +25,21 @@ def main():
     register_processors()
     
     # Create components
-    parameters = NoiseParameters()
+    # Initialize parameter registry and set default noise processor
+    param_registry = ParameterRegistry()
+    noise_generators = AudioProcessorFactory.get_processors_by_category("noise")
+    if noise_generators:
+        param_registry.set_processor_type(noise_generators[0].name)
     audio_engine = AudioEngine()  # Uses default noise+bandpass config
     
     # Create and show main window first to have access to waveform view
-    window = MainWindow(parameters)
+    window = MainWindow(param_registry)
     window.show()
     
     # Create audio stream with waveform view
     audio_stream = AudioStream(lambda x: None, window.waveform_view)
     audio_observer = AudioParameterObserver(audio_engine, audio_stream)
-    parameters.attach(audio_observer)
+    param_registry.attach(audio_observer)
     
     try:
         

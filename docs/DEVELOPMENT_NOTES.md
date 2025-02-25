@@ -15,6 +15,11 @@
   - Easy to extend with new noise types
   - Clean separation of concerns
 
+- Builder Pattern:
+  - ParameterDefinitionBuilder for fluent parameter definition
+  - Improves readability and maintainability
+  - Reduces parameter definition boilerplate
+
 ### Code Organization
 - App/core/strategies/
   - noise/        # Noise generation strategies
@@ -69,6 +74,12 @@ We've experimented with several low-pass filter implementations:
     - Low-pass: y[n] = alpha * x[n] + (1-alpha) * y[n-1]
     - Base gain (1.5x) with small bandwidth-dependent boost
     - Narrow bandwidth gets slightly more gain (+0.2x)
+
+- AudioProcessorFactory:
+  - Central registry for all audio processors
+  - Handles parameter validation and processor instantiation
+  - Supports categorization (noise, filter, etc.)
+  - Provides detailed parameter metadata
 
 ### Signal Chain
 1. Parameter Updates (Observer pattern)
@@ -148,44 +159,113 @@ We've experimented with several low-pass filter implementations:
    - Domain-specific base classes
    - More intuitive code organization
 
-2. Implement Processing Chain
-   - Create AudioChain class
-   - Support dynamic processor ordering
-   - Add processor lifecycle management
-   Benefits:
-   - Flexible effect chaining
-   - Easy to add new effect types
-   - Better audio pipeline control
+2. AudioChain Implementation
+The proposed AudioChain would address these limitations with:
+
+Dynamic Processor Ordering:
+
+Add/remove/reorder processors at runtime
+Enable/disable specific processors without removing them
+Support for processor groups (parallel processing paths)
+Processor Lifecycle Management:
+
+Proper initialization and cleanup of processors
+Resource management for processors that need it
+Hot-swapping processors without audio interruption
+Targeted Parameter Routing:
+
+Route parameters to specific processors
+Support for processor-specific parameter namespaces
+Parameter inheritance and overrides between processors
+Advanced Signal Flow:
+
+Support for side-chains and feedback loops
+Split/merge audio paths for parallel processing
+Conditional processing based on audio characteristics
+Processor Communication:
+
+Inter-processor messaging system
+Shared state between related processors
+Event notifications for significant changes
 
 ### Phase 3: Advanced Features
    Enhance GUI Integration:
    - Update GUI for dynamic parameters
    - Add component controls
 
-### Current Implementation Status (as of commit 308abd0)
+### Current Implementation Status (as of latest commit)
 
 1. Completed:
    - Phase 1.1: Dictionary-based Parameters
    - Phase 1.2: Parameter Registry System
-   - Phase 2.1: Component Factories (partial)
-     - Implemented AudioProcessorFactory
-     - Set up basic component registration
+   - Phase 2.1: Component Factories
+     - Implemented AudioProcessorFactory with robust parameter validation
+     - Created ParameterDefinitionBuilder with fluent API
+     - Implemented common parameter definitions for reuse
+     - Set up proper component registration with parameter metadata
+   - Parameter Validation Fix:
+     - Updated validation.py to handle different ParameterRange implementations
+     - Made ParameterRange properly callable
+     - Ensured consistent validation across core and GUI components
 
-2. Known Issues:
-   - Volume slider not affecting output
-     - Root cause: XorShiftGenerator not handling volume parameter
-     - Potential fix: Add volume scaling in generator's process_audio method
+2. Key Improvements:
+   - Parameter Builder Pattern:
+     - Fluent API for defining parameters: `Param().float().default(0.5).range(0, 1).display("Volume").build()`
+     - Type-safe parameter definitions
+     - Reusable parameter definitions via common_parameters.py
+     - Reduced duplication and improved maintainability
 
-3. Next Steps:
-   - Fix volume control in XorShiftGenerator
-   - Complete Phase 2.1 with proper component lifecycle management
-   - Begin planning for Phase 2.2 (Processing Chain)
+   - Enhanced Processor Factory:
+     - Robust parameter validation (type checking, range validation)
+     - Improved error messages for invalid parameters
+     - Better separation of concerns between registration and instantiation
+     - Support for enum parameters and proper validation
+
+   - GUI Integration:
+     - Updated to work with the new parameter system
+     - Dynamic control creation based on processor parameters
+     - Proper handling of different parameter types (float, int, enum)
+
+3. Current Challenges:
+   - Parameter System Architecture:
+     - Disconnected parameter flow between GUI and core
+     - Inconsistent parameter access patterns
+     - Circular dependencies between core and GUI modules
+     - Duplicate parameter registries in core and GUI
+
+   - Integration Issues:
+     - Processor selection not properly connected to audio engine
+     - Parameter validation duplicated in multiple places
+     - Missing event handlers for GUI controls
+
+4. Next Steps (Detailed):
+   - Phase 2.2: Resolve Circular Dependencies
+     - Move all parameter system code to core
+     - Remove GUI imports from core modules
+     - Create proper interfaces for parameter access
+     - Consolidate core and GUI parameter registries
+
+   - Phase 2.3: Implement Unified Parameter Flow
+     - Fix NoiseControlsWidget event handlers
+     - Update NoiseParameters to handle processor type changes
+     - Refine AudioEngine to handle parameter updates properly
+
+   - Phase 2.4: Clean Up and Optimize
+     - Create consistent parameter access patterns
+     - Improve error handling for parameter validation
+     - Optimize parameter update performance
+
+   - Phase 3: Advanced Features
+     - Implement parameter presets system
+     - Add parameter automation capabilities
+     - Create parameter grouping and relationships
+     - Implement parameter persistence (save/load settings)
 
 ### Implementation Strategy
-1. Current Focus: Complete Phase 2.1
-   - Fix volume control
-   - Ensure proper parameter handling
-   - Maintain existing functionality
+1. Current Focus: Begin Phase 2.2
+   - Implement AudioChain class
+   - Support dynamic processor ordering
+   - Add processor lifecycle management
 
 2. Evaluate after each sub-phase
    - Test thoroughly

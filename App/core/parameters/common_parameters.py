@@ -1,4 +1,4 @@
-from .parameter_builder import ParameterDefinitionBuilder as Param
+from core.parameters.parameter_builder import ParameterDefinitionBuilder as Param
 
 COMMON_PARAMS = {
     "volume": Param().float().default(0.5).range(0, 1).display("Volume").units("gain").build(),
