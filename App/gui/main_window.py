@@ -1,12 +1,12 @@
 from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout
-from core.parameters.noise_parameters import NoiseParameters
-from gui.PyQt_gui import NoiseControlsWidget
-from gui.waveform_view import WaveformView
+from App.core.parameters.parameter_registry import ParameterRegistry
+from App.gui.PyQt_gui import NoiseControlsWidget
+from App.gui.waveform_view import WaveformView
 
 class MainWindow(QMainWindow):
     """Main application window."""
     
-    def __init__(self, parameters: NoiseParameters):
+    def __init__(self, parameters: ParameterRegistry):
         super().__init__()
         self.setWindowTitle("Noise Playground")
         self.resize(800, 600)

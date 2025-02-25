@@ -2,8 +2,8 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout
 from PyQt6.QtCore import QTimer
 import pyqtgraph as pg
 import numpy as np
-from core.parameters.observer import Observer
-from core.visualization.implementations import BandpassResponseVisualizer, CascadedLowpassResponseV2Visualizer, CascadedLowpassResponseVisualizer
+from App.core.parameters.observer import Observer
+from App.core.visualization.implementations import BandpassResponseVisualizer, CascadedLowpassResponseV2Visualizer, CascadedLowpassResponseVisualizer
 
 class WaveformView(QWidget, Observer):
     """Widget for displaying frequency domain analysis and filter response."""

@@ -1,7 +1,7 @@
 from typing import Any, Dict, Optional, Union
-from .observer import Subject
-from gui.parameters.validation import ParameterRange
-from gui.parameters.parameter_registry import ParameterRegistry, ParameterDefinition
+from App.core.parameters.observer import Subject
+from App.core.parameters.parameter_registry import ParameterRegistry, ParameterDefinition
+from App.core.parameters.parameter_builder import ParameterRange
 
 class ParameterSystem(Subject):
     """Unified parameter management system with observer pattern support."""

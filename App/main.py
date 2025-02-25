@@ -1,10 +1,10 @@
-from core.audio.audio_engine import AudioEngine
-from core.audio.audio_stream import AudioStream
-from core.audio.audio_parameter_observer import AudioParameterObserver
-from core.parameters.parameter_registry import ParameterRegistry
-from core.processors.processor_registry import register_processors
-from core.processors.processor_factory import AudioProcessorFactory
-from gui.main_window import MainWindow
+from App.core.audio.audio_engine import AudioEngine
+from App.core.audio.audio_stream import AudioStream
+from App.core.audio.audio_parameter_observer import AudioParameterObserver
+from App.core.parameters.parameter_registry import ParameterRegistry
+from App.core.processors.processor_registry import register_processors
+from App.core.processors.processor_factory import AudioProcessorFactory
+from App.gui.main_window import MainWindow
 from PyQt6.QtWidgets import QApplication
 import signal
 import sys
