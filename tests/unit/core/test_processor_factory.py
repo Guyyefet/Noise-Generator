@@ -1,97 +1,166 @@
-from App.core.processors.processor_factory import AudioProcessorFactory
-from App.core.noise.base import NoiseGenerator
-from App.core.filters.base import FilterBase
-from unittest.mock import Mock
 import pytest
+from App.core.processors.processor_factory import AudioProcessorFactory
+from App.core.parameters.parameter_builder import ParameterDefinitionBuilder as Param
 
-class MockGenerator(NoiseGenerator):
-    """Mock noise generator for testing."""
-    def __init__(self, **params):
-        self.params = params
-    
-    def generate_noise(self, num_frames):
-        return [0] * num_frames
+class MockProcessor:
+    def __init__(self, **kwargs):
+        self.params = kwargs
 
-class MockFilter(FilterBase):
-    """Mock filter for testing."""
-    def __init__(self, **params):
-        self.params = params
+def test_register_processor():
+    AudioProcessorFactory._registry.clear()  # Reset registry for test
     
-    def process_audio(self, audio_data):
-        return audio_data
+    parameters = {
+        "volume": Param().float().default(0.5).range(0, 1).display("Volume").units("gain").build(),
+        "frequency": Param().float().default(440).range(20, 20000).display("Frequency").units("Hz").build()
+    }
+    
+    AudioProcessorFactory.register(
+        name="test_processor",
+        processor_class=MockProcessor,
+        description="Test processor",
+        category="test",
+        parameters=parameters
+    )
+    
+    assert "test_processor" in AudioProcessorFactory._registry
+    reg = AudioProcessorFactory._registry["test_processor"]
+    assert reg.name == "test_processor"
+    assert reg.processor_class == MockProcessor
+    assert reg.description == "Test processor"
+    assert reg.category == "test"
+    assert reg.parameters == parameters
 
-class TestAudioProcessorFactory:
-    @pytest.fixture(autouse=True)
-    def clear_registry(self):
-        """Clear factory registry before each test."""
-        AudioProcessorFactory._noise_generators = {}
-        AudioProcessorFactory._filters = {}
-        yield
-        AudioProcessorFactory._noise_generators = {}
-        AudioProcessorFactory._filters = {}
+def test_create_processor():
+    AudioProcessorFactory._registry.clear()
     
-    def test_register_generator(self):
-        """Test noise generator registration."""
-        AudioProcessorFactory.register_generator("test", MockGenerator)
-        assert "test" in AudioProcessorFactory._noise_generators
-        assert AudioProcessorFactory._noise_generators["test"] == MockGenerator
+    parameters = {
+        "volume": Param().float().default(0.5).range(0, 1).display("Volume").units("gain").build()
+    }
     
-    def test_register_filter(self):
-        """Test filter registration."""
-        AudioProcessorFactory.register_filter("test", MockFilter)
-        assert "test" in AudioProcessorFactory._filters
-        assert AudioProcessorFactory._filters["test"] == MockFilter
+    AudioProcessorFactory.register(
+        name="test_processor",
+        processor_class=MockProcessor,
+        description="Test processor",
+        category="test",
+        parameters=parameters
+    )
     
-    def test_register_generator_overwrite(self):
-        """Test overwriting existing generator registration."""
-        # Register first generator
-        AudioProcessorFactory.register_generator("test", MockGenerator)
-        
-        # Create new generator type
-        class NewGenerator(NoiseGenerator):
-            def generate_noise(self, num_frames):
-                return [1] * num_frames
-        
-        # Register with same name
-        AudioProcessorFactory.register_generator("test", NewGenerator)
-        
-        # Verify overwritten
-        assert AudioProcessorFactory._noise_generators["test"] == NewGenerator
+    processor = AudioProcessorFactory.create("test_processor", volume=0.7)
+    assert isinstance(processor, MockProcessor)
+    assert processor.params["volume"] == 0.7
+
+def test_create_processor_with_invalid_param():
+    AudioProcessorFactory._registry.clear()
     
-    def test_register_filter_overwrite(self):
-        """Test overwriting existing filter registration."""
-        # Register first filter
-        AudioProcessorFactory.register_filter("test", MockFilter)
-        
-        # Create new filter type
-        class NewFilter(FilterBase):
-            def process_audio(self, audio_data):
-                return [x * 2 for x in audio_data]
-        
-        # Register with same name
-        AudioProcessorFactory.register_filter("test", NewFilter)
-        
-        # Verify overwritten
-        assert AudioProcessorFactory._filters["test"] == NewFilter
+    parameters = {
+        "volume": Param().float().default(0.5).range(0, 1).display("Volume").units("gain").build()
+    }
     
-    def test_create_noise_generator(self):
-        """Test noise generator creation."""
-        params = {"seed": 42}
-        processor = AudioProcessorFactory.create("noise", **params)
-        
-        assert isinstance(processor, NoiseGenerator)
-        assert hasattr(processor, "generate")  # XorShiftGenerator uses generate() method
-        assert hasattr(processor, "process_audio")  # All processors must have process_audio()
-        assert processor.seed == 42
+    AudioProcessorFactory.register(
+        name="test_processor",
+        processor_class=MockProcessor,
+        description="Test processor",
+        category="test",
+        parameters=parameters
+    )
     
-    def test_create_filter(self):
-        """Test filter creation."""
-        processor = AudioProcessorFactory.create("bandpass")  # BandpassFilter takes no init params
-        
-        assert isinstance(processor, FilterBase)
-        assert hasattr(processor, "process_audio")
+    with pytest.raises(ValueError) as exc:
+        AudioProcessorFactory.create("test_processor", volume=1.5)
+    assert "outside valid range" in str(exc.value)
+
+def test_create_processor_with_unknown_param():
+    AudioProcessorFactory._registry.clear()
     
-    def test_create_unknown_processor(self):
-        """Test error handling for unknown processor type."""
-        with pytest.raises(KeyError, match="Unknown processor type: unknown"):
-            AudioProcessorFactory.create("unknown")
+    parameters = {
+        "volume": Param().float().default(0.5).range(0, 1).display("Volume").units("gain").build()
+    }
+    
+    AudioProcessorFactory.register(
+        name="test_processor",
+        processor_class=MockProcessor,
+        description="Test processor",
+        category="test",
+        parameters=parameters
+    )
+    
+    with pytest.raises(ValueError) as exc:
+        AudioProcessorFactory.create("test_processor", unknown_param=0.5)
+    assert "Unknown parameter" in str(exc.value)
+
+def test_create_processor_with_wrong_type():
+    AudioProcessorFactory._registry.clear()
+    
+    parameters = {
+        "volume": Param().float().default(0.5).range(0, 1).display("Volume").units("gain").build()
+    }
+    
+    AudioProcessorFactory.register(
+        name="test_processor",
+        processor_class=MockProcessor,
+        description="Test processor",
+        category="test",
+        parameters=parameters
+    )
+    
+    with pytest.raises(TypeError) as exc:
+        AudioProcessorFactory.create("test_processor", volume="not a number")
+    assert "must be a number" in str(exc.value)
+
+def test_get_processors_by_category():
+    AudioProcessorFactory._registry.clear()
+    
+    parameters = {
+        "volume": Param().float().default(0.5).range(0, 1).display("Volume").units("gain").build()
+    }
+    
+    AudioProcessorFactory.register(
+        name="test_processor1",
+        processor_class=MockProcessor,
+        description="Test processor 1",
+        category="test",
+        parameters=parameters
+    )
+    
+    AudioProcessorFactory.register(
+        name="test_processor2",
+        processor_class=MockProcessor,
+        description="Test processor 2",
+        category="test",
+        parameters=parameters
+    )
+    
+    AudioProcessorFactory.register(
+        name="other_processor",
+        processor_class=MockProcessor,
+        description="Other processor",
+        category="other",
+        parameters=parameters
+    )
+    
+    test_processors = AudioProcessorFactory.get_processors_by_category("test")
+    assert len(test_processors) == 2
+    assert all(p.category == "test" for p in test_processors)
+
+def test_enum_parameter():
+    AudioProcessorFactory._registry.clear()
+    
+    parameters = {
+        "mode": Param().enum(["sine", "square", "triangle"]).default("sine").display("Waveform").build()
+    }
+    
+    AudioProcessorFactory.register(
+        name="test_processor",
+        processor_class=MockProcessor,
+        description="Test processor",
+        category="test",
+        parameters=parameters
+    )
+    
+    # Valid enum value
+    processor = AudioProcessorFactory.create("test_processor", mode="square")
+    assert processor.params["mode"] == "square"
+    
+    # Invalid enum value
+    with pytest.raises(ValueError) as exc:
+        AudioProcessorFactory.create("test_processor", mode="invalid")
+    assert "Invalid value for enum parameter" in str(exc.value)
