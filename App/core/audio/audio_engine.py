@@ -34,7 +34,7 @@ class AudioEngine(AudioEngineBase):
     
     DEFAULT_CONFIG = {
         "processors": [
-            {"type": "noise"},
+            {"type": "xorshift"},  # Use specific registered processor name
             {"type": "bandpass"}
         ]
     }

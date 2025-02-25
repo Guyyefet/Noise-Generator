@@ -31,7 +31,7 @@ class TestAudioEngine:
             # Configure factory to return our mock processors
             # Configure factory to return our mock processors
             def create_processor(proc_type, **kwargs):
-                if proc_type == 'noise':
+                if proc_type == 'xorshift' or proc_type == 'noise':
                     return generator
                 elif proc_type == 'bandpass':
                     return filter
@@ -46,7 +46,7 @@ class TestAudioEngine:
         
         # Verify factory called correctly
         assert mock_factory.create.call_count == 2
-        mock_factory.create.assert_any_call('noise')
+        mock_factory.create.assert_any_call('xorshift')
         mock_factory.create.assert_any_call('bandpass')
         
         # Verify processors initialized
