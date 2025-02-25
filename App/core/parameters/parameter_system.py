@@ -1,7 +1,7 @@
-from typing import Any, Dict, Optional, Union
-from App.core.parameters.observer import Subject
 from App.core.parameters.parameter_registry import ParameterRegistry, ParameterDefinition
 from App.core.parameters.parameter_builder import ParameterRange
+from App.core.parameters.observer import Subject
+from typing import Any, Dict, List, Optional, Union
 
 class ParameterSystem(Subject):
     """Unified parameter management system with observer pattern support."""
@@ -19,26 +19,6 @@ class ParameterSystem(Subject):
             for name, definition in self.get_parameter_definitions().items()
         }
         
-    def update_parameters(self, **kwargs):
-        """
-        Update parameters and notify observers.
-        
-        Args:
-            **kwargs: Parameter key-value pairs to update
-            
-        Raises:
-            KeyError: If an unknown parameter is provided
-            ValueError: If a parameter value is invalid
-        """
-        # Validate parameters first
-        validated = self.validate_parameters(kwargs)
-        
-        # Update parameters
-        self._parameters.update(validated)
-        
-        # Notify observers with updated parameters
-        self.notify(self._parameters)
-    
     def register_processor_parameters(self, processor_type: str, parameters: Dict[str, ParameterDefinition]):
         """
         Register parameters for a specific processor type.
@@ -52,98 +32,70 @@ class ParameterSystem(Subject):
         """
         self._registry.register_parameters(processor_type, parameters)
     
-    def get_definition(self, name: str) -> ParameterDefinition:
+    def get_parameter(self, name: Optional[str] = None, 
+                    fields: Optional[List[str]] = None) -> Union[Dict[str, Any], Any]:
         """
-        Get a parameter definition by name.
+        Get parameter data with optional filtering.
         
         Args:
-            name: Parameter name
+            name: Parameter name (None for all parameters)
+            fields: List of specific fields to return
             
         Returns:
-            Parameter definition object
+            Single parameter value or dict of parameter data
             
         Raises:
             KeyError: If parameter not found
+            ValueError: If invalid field requested
         """
-        return self._registry.get_parameter_definition(name)
+        if name:
+            # Get single parameter
+            if name not in self._parameters:
+                raise KeyError(f"Parameter {name} not found")
+                
+            definition = self._registry.get_parameter_definition(name)
+            param_data = {
+                'value': self._parameters[name],
+                'definition': definition
+            }
+            
+            if fields:
+                return {field: param_data[field] for field in fields 
+                       if field in param_data}
+            return param_data
+            
+        # Get all parameters
+        return {
+            name: {
+                'value': value,
+                'definition': self._registry.get_parameter_definition(name)
+            }
+            for name, value in self._parameters.items()
+        }
     
-    def validate_parameters(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+    def update_parameters(self, **kwargs):
         """
-        Validate a dictionary of parameters against their definitions.
+        Update parameters with validation and notification.
         
         Args:
-            parameters: Dictionary of parameter values
-            
-        Returns:
-            Dictionary of validated parameter values
+            **kwargs: Parameter key-value pairs to update
             
         Raises:
             KeyError: If an unknown parameter is provided
             ValueError: If a parameter value is invalid
         """
-        validated = {}
-        for name, value in parameters.items():
+        for name, value in kwargs.items():
+            if name not in self._parameters:
+                raise KeyError(f"Parameter {name} not found")
+                
             definition = self._registry.get_parameter_definition(name)
             
-            # Type validation
-            if definition.type == "float" and not isinstance(value, (int, float)):
-                raise TypeError(f"Parameter '{name}' must be a number")
-            elif definition.type == "int" and not isinstance(value, int):
-                raise TypeError(f"Parameter '{name}' must be an integer")
-            elif definition.type == "enum" and value not in definition.enum_values:
-                raise ValueError(f"Invalid value for enum parameter '{name}': {value}")
-                
-            # Range validation
-            if definition.range:
-                if not definition.range.validate_value(value):
-                    raise ValueError(
-                        f"Parameter '{name}' value {value} is outside valid range "
-                        f"[{definition.range.min_value}, {definition.range.max_value}]"
-                    )
+            # Validate value
+            if not definition.validate_value(value):
+                raise ValueError(
+                    f"Invalid value for parameter {name}: {value}"
+                )
             
-            validated[name] = value
+            self._parameters[name] = value
             
-        return validated
-    
-    def get_parameters(self) -> Dict[str, Any]:
-        """Get dictionary of all current parameter values."""
-        return self._parameters.copy()
-        
-    def get_parameter_definitions(self) -> Dict[str, ParameterDefinition]:
-        """Get dictionary of all registered parameter definitions."""
-        return self._registry.get_all_parameter_definitions()
-        
-    def get_parameter(self, name: str, default: Optional[Any] = None) -> Any:
-        """
-        Get a parameter value.
-        
-        Args:
-            name: Parameter name
-            default: Default value if parameter doesn't exist
-            
-        Returns:
-            Parameter value or default if not found
-            
-        Raises:
-            KeyError: If parameter not found and no default provided
-        """
-        if name not in self._parameters:
-            if default is not None:
-                return default
-            raise KeyError(f"Parameter {name} not found")
-        return self._parameters[name]
-        
-    def get_parameter_definition(self, name: str) -> ParameterDefinition:
-        """
-        Get a parameter definition by name.
-        
-        Args:
-            name: Parameter name
-            
-        Returns:
-            Parameter definition object
-            
-        Raises:
-            KeyError: If parameter not found
-        """
-        return self._registry.get_parameter_definition(name)
+        self.notify(self._parameters)

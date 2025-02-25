@@ -13,6 +13,7 @@ class ParameterDefinition:
     default_value: Optional[Any] = None
     valid_values: Optional[list] = None
     description: Optional[str] = None
+    gui_metadata: Optional[Dict[str, Any]] = None
 
 class BaseParameterRegistry(Subject):
     """Base class for parameter registries with common functionality."""
@@ -34,7 +35,8 @@ class BaseParameterRegistry(Subject):
             range=param_def.get("range"),
             default_value=param_def.get("default_value"),
             valid_values=param_def.get("valid_values"),
-            description=param_def.get("description")
+            description=param_def.get("description"),
+            gui_metadata=param_def.get("gui_metadata")
         )
         
         self._parameters[name] = definition

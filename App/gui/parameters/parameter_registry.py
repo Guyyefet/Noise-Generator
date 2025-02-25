@@ -2,55 +2,45 @@ from typing import Any, Dict, Optional, List
 from App.core.parameters.base_registry import BaseParameterRegistry, ParameterDefinition
 
 class ParameterRegistry(BaseParameterRegistry):
-    """Manages GUI-specific parameter definitions and registration."""
+    """Manages GUI-specific parameter interactions."""
     
-    def __init__(self):
-        super().__init__()
-        self._gui_metadata: Dict[str, Dict[str, Any]] = {}
+    def get_metadata(self, name: Optional[str] = None, fields: Optional[List[str]] = None) -> Dict[str, Any]:
+        """
+        Get parameter metadata with optional filtering.
         
-    def register_gui_parameter(self, name: str, display_name: str, tooltip: str = "", 
-                             control_type: str = "slider", options: Optional[List[str]] = None):
-        """Register GUI-specific metadata for a parameter."""
-        if name not in self._definitions:
-            raise KeyError(f"Parameter {name} not found in core registry")
+        Args:
+            name: Parameter name (None for all parameters)
+            fields: List of specific metadata fields to return
             
-        self._gui_metadata[name] = {
-            'display_name': display_name,
-            'tooltip': tooltip,
-            'control_type': control_type,
-            'options': options
+        Returns:
+            Dict of metadata for single parameter or all parameters
+        """
+        if name:
+            definition = self.get_definition(name)
+            metadata = definition.gui_metadata or {}
+            return {k: v for k, v in metadata.items() if not fields or k in fields}
+            
+        return {
+            param_name: {k: v for k, v in (defn.gui_metadata or {}).items() 
+                        if not fields or k in fields}
+            for param_name, defn in self.get_all_definitions().items()
         }
-        
-    def get_gui_metadata(self, name: str) -> Dict[str, Any]:
-        """Get GUI metadata for a parameter."""
-        if name not in self._gui_metadata:
-            raise KeyError(f"No GUI metadata found for parameter {name}")
-        return self._gui_metadata[name]
-        
-    def get_all_gui_metadata(self) -> Dict[str, Dict[str, Any]]:
-        """Get all registered GUI metadata."""
-        return self._gui_metadata.copy()
         
     def bind_control(self, name: str, control: Any):
         """Bind a GUI control to a parameter."""
-        if name not in self._definitions:
-            raise KeyError(f"Parameter {name} not found")
-            
-        # Store control reference
-        self._gui_metadata[name]['control'] = control
+        definition = self.get_definition(name)
+        if not definition.gui_metadata:
+            definition.gui_metadata = {}
+        definition.gui_metadata['control'] = control
         
     def update_from_control(self, name: str, value: Any):
         """Update parameter value from GUI control."""
-        if name not in self._definitions:
-            raise KeyError(f"Parameter {name} not found")
-            
-        # Validate and update parameter
         self.update_parameter(name, value)
         
     def notify_controls(self):
         """Notify all bound controls of parameter changes."""
-        for name, metadata in self._gui_metadata.items():
-            if 'control' in metadata:
-                control = metadata['control']
-                value = self.get_parameter(name)
+        for definition in self.get_all_definitions().values():
+            if definition.gui_metadata and 'control' in definition.gui_metadata:
+                control = definition.gui_metadata['control']
+                value = self.get_parameter(definition.name)
                 control.setValue(value)

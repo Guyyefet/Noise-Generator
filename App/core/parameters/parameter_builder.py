@@ -14,6 +14,7 @@ class ParameterDefinition:
     enum_values: Optional[List[str]] = None
     display_name: Optional[str] = None
     units: Optional[str] = None
+    gui_metadata: Optional[Dict[str, Any]] = None
 
 class ParameterDefinitionBuilder:
     def __init__(self):
@@ -23,6 +24,7 @@ class ParameterDefinitionBuilder:
         self._enum_values = None
         self._display_name = None
         self._units = None
+        self._gui_metadata = {}
 
     def float(self):
         self._type = "float"
@@ -61,6 +63,21 @@ class ParameterDefinitionBuilder:
         self._units = units
         return self
 
+    def control_type(self, control_type: str):
+        """Set the GUI control type (e.g. 'slider', 'knob', 'dropdown')"""
+        self._gui_metadata["control_type"] = control_type
+        return self
+
+    def tooltip(self, text: str):
+        """Set the GUI tooltip text"""
+        self._gui_metadata["tooltip"] = text
+        return self
+
+    def step_size(self, step: float):
+        """Set the step size for numeric controls"""
+        self._gui_metadata["step_size"] = step
+        return self
+
     def build(self) -> Dict[str, Any]:
         if not self._type or self._default_value is None:
             raise ValueError("Type and default value must be specified")
@@ -71,5 +88,6 @@ class ParameterDefinitionBuilder:
             "range": self._range,
             "enum_values": self._enum_values,
             "display_name": self._display_name,
-            "units": self._units
+            "units": self._units,
+            "gui_metadata": self._gui_metadata or None
         }
