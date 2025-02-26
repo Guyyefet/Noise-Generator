@@ -1,8 +1,8 @@
+from App.core.processors.processor_factory import AudioProcessorFactory
+from App.core.parameters.parameter_system import ParameterRegistry
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                             QComboBox, QSlider, QSpinBox, QDoubleSpinBox)
 from PyQt6.QtCore import Qt
-from App.core.processors.processor_factory import AudioProcessorFactory
-from App.core.parameters.parameter_system import ParameterRegistry
 
 class NoiseControlsWidget(QWidget):
     def __init__(self, parameters):

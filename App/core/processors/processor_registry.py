@@ -1,11 +1,11 @@
-from ..noise.implementations.xorshift import XorShiftGenerator
-from ..noise.implementations.fractal import FractalNoiseGenerator
-from ..filters.implementations.bandpass import BandpassFilter
-from ..filters.implementations.cascaded_onepole_lowpass import CascadedOnePoleLowPass
-from ..filters.implementations.cascaded_onepole_lowpass_v2 import CascadedOnePoleLowPassV2
-from .processor_factory import AudioProcessorFactory
-from ..parameters.parameter_builder import ParameterDefinitionBuilder as Param
-from ..parameters.common_parameters import get_params
+from App.core.noise.implementations.xorshift import XorShiftGenerator
+from App.core.noise.implementations.fractal import FractalNoiseGenerator
+from App.core.filters.implementations.bandpass import BandpassFilter
+from App.core.filters.implementations.cascaded_onepole_lowpass import CascadedOnePoleLowPass
+from App.core.filters.implementations.cascaded_onepole_lowpass_v2 import CascadedOnePoleLowPassV2
+from App.core.processors.processor_factory import AudioProcessorFactory
+from App.core.parameters.parameter_builder import ParameterDefinitionBuilder as Param
+from App.core.parameters.common_parameters import get_params
 
 def register_processors():
     """Register all available audio processors."""

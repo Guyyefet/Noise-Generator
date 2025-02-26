@@ -1,5 +1,5 @@
-from typing import Any, Dict, Optional, List
 from App.core.parameters.base_registry import BaseParameterRegistry, ParameterDefinition
+from typing import Any, Dict, Optional, List
 
 class ParameterRegistry(BaseParameterRegistry):
     """Manages GUI-specific parameter interactions."""

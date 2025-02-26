@@ -1,6 +1,6 @@
 """Lowpass filter frequency response visualization."""
 
-from ..filter_response_base import FilterResponseVisualizer
+from App.core.visualization.filter_response_base import FilterResponseVisualizer
 import numpy as np
 
 class CascadedLowpassResponseVisualizer(FilterResponseVisualizer):

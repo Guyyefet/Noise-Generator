@@ -1,6 +1,6 @@
-from typing import Dict, Any
 from App.core.parameters.parameter_builder import ParameterDefinitionBuilder as Param
 from App.core.parameters.base_registry import BaseParameterRegistry
+from typing import Dict, Any
 
 # Create registry instance
 common_parameter_registry = BaseParameterRegistry()
