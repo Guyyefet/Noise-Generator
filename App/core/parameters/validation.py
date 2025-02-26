@@ -58,7 +58,7 @@ def validate_parameter(value: Any, param_def: dict) -> bool:
         if not validate_range(value, param_def["range"]):
             return False
             
-    if "valid_values" in param_def:
+    if "valid_values" in param_def and param_def["valid_values"] is not None:
         if not validate_enum(value, param_def["valid_values"]):
             return False
             

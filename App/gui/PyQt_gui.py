@@ -80,7 +80,15 @@ class NoiseControlsWidget(QWidget):
             param_layout = QHBoxLayout()
             
             # Add label
-            label = QLabel(param_def["display_name"] or param_name)
+            # Handle both dictionary and ParameterDefinition objects
+            if hasattr(param_def, 'get'):
+                # It's a dictionary
+                display_name = param_def.get("display_name") or param_name
+            else:
+                # It's a ParameterDefinition object
+                display_name = param_def.display_name or param_name
+                
+            label = QLabel(display_name)
             param_layout.addWidget(label)
             
             # Create appropriate control based on parameter type
@@ -92,28 +100,44 @@ class NoiseControlsWidget(QWidget):
 
     def _create_parameter_control(self, param_name, param_def):
         """Create an appropriate control widget for the parameter."""
-        if param_def["type"] == "float":
+        # Handle both dictionary and ParameterDefinition objects
+        if hasattr(param_def, 'get'):
+            # It's a dictionary
+            param_type = param_def.get("type")
+            param_range = param_def.get("range")
+            default_value = param_def.get("default_value")
+            units = param_def.get("units")
+            enum_values = param_def.get("enum_values")
+        else:
+            # It's a ParameterDefinition object
+            param_type = param_def.type
+            param_range = param_def.range
+            default_value = param_def.default_value
+            units = param_def.units
+            enum_values = param_def.valid_values
+        
+        if param_type == "float" or param_type == float:
             control = QDoubleSpinBox()
-            if param_def["range"]:
-                control.setRange(param_def["range"].min_value, param_def["range"].max_value)
-            control.setValue(param_def["default_value"])
-            if param_def["units"]:
-                control.setSuffix(f" {param_def['units']}")
+            if param_range:
+                control.setRange(param_range.min_value, param_range.max_value)
+            control.setValue(default_value)
+            if units:
+                control.setSuffix(f" {units}")
             return control
             
-        elif param_def["type"] == "int":
+        elif param_type == "int" or param_type == int:
             control = QSpinBox()
-            if param_def["range"]:
-                control.setRange(param_def["range"].min_value, param_def["range"].max_value)
-            control.setValue(param_def["default_value"])
-            if param_def["units"]:
-                control.setSuffix(f" {param_def['units']}")
+            if param_range:
+                control.setRange(param_range.min_value, param_range.max_value)
+            control.setValue(default_value)
+            if units:
+                control.setSuffix(f" {units}")
             return control
             
-        elif param_def["type"] == "enum":
+        elif param_type == "enum" or param_type == str and enum_values:
             control = QComboBox()
-            control.addItems(param_def["enum_values"])
-            index = control.findText(param_def["default_value"])
+            control.addItems(enum_values)
+            index = control.findText(default_value)
             if index >= 0:
                 control.setCurrentIndex(index)
             return control

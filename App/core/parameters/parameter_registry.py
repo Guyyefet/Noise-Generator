@@ -17,9 +17,29 @@ class ParameterRegistry(BaseParameterRegistry):
         processor_info = AudioProcessorFactory.get_processor_info(processor_type)
         if processor_info:
             for name, param_def in processor_info.parameters.items():
-                if not validate_parameter(param_def.get("default_value"), param_def):
-                    raise ValueError(f"Invalid default value for parameter {name}")
-                super().register(name, param_def)
+                # Handle both dictionary and ParameterDefinition objects
+                if hasattr(param_def, 'get'):
+                    # It's a dictionary
+                    default_value = param_def.get("default_value")
+                    if not validate_parameter(default_value, param_def):
+                        raise ValueError(f"Invalid default value for parameter {name}")
+                    super().register(name, param_def)
+                else:
+                    # It's a ParameterDefinition object
+                    default_value = param_def.default_value
+                    param_dict = {
+                        "type": param_def.type,
+                        "display_name": param_def.display_name,
+                        "units": param_def.units,
+                        "range": param_def.range,
+                        "default_value": param_def.default_value,
+                        "valid_values": param_def.valid_values,
+                        "description": param_def.description,
+                        "gui_metadata": param_def.gui_metadata
+                    }
+                    if not validate_parameter(default_value, param_dict):
+                        raise ValueError(f"Invalid default value for parameter {name}")
+                    super().register(name, param_dict)
         
     def get_parameter_info(self, name: str) -> Dict[str, Any]:
         """Get parameter metadata including type, range, and current value."""

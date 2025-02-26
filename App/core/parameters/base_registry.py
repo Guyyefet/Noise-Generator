@@ -1,5 +1,5 @@
 from App.core.parameters.observer import Subject
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 from dataclasses import dataclass
 
 @dataclass
@@ -42,15 +42,35 @@ class BaseParameterRegistry(Subject):
         self._parameters[name] = definition
         self.notify()
         
-    def get_definition(self, name: str) -> ParameterDefinition:
-        """Get a parameter definition by name."""
-        if name not in self._parameters:
-            raise KeyError(f"Parameter {name} not found")
-        return self._parameters[name]
+    def get_definition(self, *names: str) -> Union[ParameterDefinition, Dict[str, ParameterDefinition]]:
+        """Get parameter definition(s) by name(s).
         
-    def get_all_definitions(self) -> Dict[str, ParameterDefinition]:
-        """Get all registered parameter definitions."""
-        return self._parameters.copy()
+        Args:
+            *names: Names of parameters to retrieve. If no names provided,
+                    returns all definitions.
+                    
+        Returns:
+            If no names provided: Dictionary of all parameter definitions
+            If single name provided: Single parameter definition
+            If multiple names provided: Dictionary of requested parameter definitions
+            
+        Raises:
+            KeyError: If any requested parameter is not found
+        """
+        if not names:
+            return self._parameters.copy()
+            
+        missing = [name for name in names if name not in self._parameters]
+        if missing:
+            raise KeyError(f"Parameters not found: {', '.join(missing)}")
+            
+        result = {name: self._parameters[name] for name in names}
+        
+        # Return single value if only one name requested
+        if len(names) == 1:
+            return result[names[0]]
+            
+        return result
         
     def notify(self, _ = None):
         """Notify observers with current parameter definitions."""

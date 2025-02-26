@@ -1,5 +1,11 @@
+from typing import Dict, Any
 from App.core.parameters.parameter_builder import ParameterDefinitionBuilder as Param
+from App.core.parameters.base_registry import BaseParameterRegistry
 
+# Create registry instance
+common_parameter_registry = BaseParameterRegistry()
+
+# Register common parameters
 COMMON_PARAMS = {
     "volume": Param().float().default(0.5).range(0, 1).display("Volume").units("gain")
         .control_type("slider").tooltip("Main output volume").step_size(0.01).build(),
@@ -25,10 +31,28 @@ COMMON_PARAMS = {
         .control_type("slider").tooltip("Noise scale").step_size(0.1).build()
 }
 
-def get_param(name: str):
-    """Get a common parameter definition by name."""
-    return COMMON_PARAMS.get(name)
+# Register all common parameters
+for name, param in COMMON_PARAMS.items():
+    common_parameter_registry.register(name, param)
 
-def get_params(*names: str):
-    """Get multiple parameter definitions by name."""
-    return {name: COMMON_PARAMS[name] for name in names}
+def get_params(*names: str) -> Dict[str, Any]:
+    """Get common parameter definitions by name(s).
+    
+    Args:
+        *names: Names of parameters to retrieve. If no names provided,
+                returns all definitions.
+                
+    Returns:
+        Dictionary of parameter definitions.
+        
+    Raises:
+        KeyError: If any requested parameter is not found
+    """
+    result = common_parameter_registry.get_definition(*names)
+    
+    # If result is a single ParameterDefinition, convert it to a dictionary
+    if isinstance(result, dict):
+        return result
+    else:
+        # It's a single ParameterDefinition, convert to dict with name as key
+        return {result.name: result}
