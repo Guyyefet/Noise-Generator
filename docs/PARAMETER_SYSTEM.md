@@ -2,181 +2,78 @@
 
 ## Overview
 
-The parameter system is designed to manage audio processing parameters across both the core audio engine and the GUI. It's currently in a transitional state as part of a larger refactoring effort to make the system more modular and flexible.
+The parameter system manages audio processing parameters through a centralized core implementation. It provides a clean interface for both the audio engine and GUI components to access and modify parameters.
 
 ### Design Patterns
 - Observer Pattern:
-  - NoiseParameters acts as Subject
-  - GUI components observe parameter changes
-  - Ensures UI stays in sync with audio engine
-  - Decouples parameter management from audio processing
+  - ParameterSystem acts as Subject
+  - Components observe parameter changes
+  - Ensures synchronization between modules
+  - Decouples parameter management from processing
 
 - Builder Pattern:
   - ParameterDefinitionBuilder for fluent parameter definition
   - Improves readability and maintainability
   - Reduces parameter definition boilerplate
 
-## Core vs. GUI Parameter Components
+## Current Implementation
 
-### Core Parameter Components
+### ParameterSystem Class
+- Inherits from Subject (observer pattern)
+- Manages parameter values and definitions
+- Uses public 'observers' list for notifications
+- Provides methods for:
+  - Registering parameters
+  - Setting processor types
+  - Getting/updating parameter values
+  - Managing control bindings
 
-1. **App/core/parameters/parameter_builder.py**:
-   - Defines `ParameterDefinitionBuilder` for fluent parameter definition
-   - Creates a `ParameterRange` dataclass for parameter constraints
-   - Provides a builder pattern for creating parameter definitions
-   - Example: `Param().float().default(0.5).range(0, 1).display("Volume").build()`
+### Parameter Registration Flow
+1. Set processor type using set_processor_type()
+2. Register parameters using register()
+3. Validate parameters during registration
+4. Set default values from definitions
 
-2. **App/core/parameters/parameter_registry.py**:
-   - Implements `ParameterRegistry` class that extends `Subject` for observer pattern
-   - Manages parameter definitions and their registration
-   - Provides methods to set processor type and get parameter info
-   - Notifies observers when parameters change
+### Observer Pattern
+- Uses public 'observers' list
+- Notifies observers on parameter changes
+- Supports multiple observer types
+- Handles notifications through core system
 
-3. **App/core/parameters/validation.py**:
-   - Defines validation functions for parameter types, ranges, and enums
-   - Implements a callable `ParameterRange` class for range validation
-   - Provides a unified validation interface for all parameter types
+## Refactoring Progress
 
-4. **App/core/parameters/common_parameters.py**:
-   - Defines common parameters used across different processors
-   - Provides helper functions to get individual or multiple parameters
-   - Centralizes parameter definitions to reduce duplication
+### Completed Phases
+Phase 1: Resolve Circular Dependencies [COMPLETE]
+- Consolidated parameter system in core
+- Implemented clean observer pattern
+- Established parameter registration flow
+- Centralized validation system
+- Removed GUI-specific parameter definitions
 
-### GUI Parameter Components
+### Upcoming Phases
+Phase 2: Unify Parameter Registries
+- Consolidate remaining parameter definitions
+- Create single source of truth
+- Implement consistent access patterns
 
-1. **App/gui/parameters/parameter_registry.py**:
-   - Defines a GUI-specific `ParameterRegistry` class
-   - Creates a `ParameterDefinition` dataclass for GUI parameter metadata
-   - Provides methods to register and retrieve parameter definitions
-   - Focused on GUI-specific parameter handling
+Phase 3: Improve Parameter Flow
+- Enhance notification system
+- Optimize parameter updates
+- Streamline processor selection
 
-2. **App/gui/parameters/parameter_definitions.py**:
-   - Creates a global GUI parameter registry instance
-   - Imports and registers common parameters from the core system
-   - Provides a getter function to access the registry
-   - Acts as a bridge between core parameters and GUI components
+## Validation Strategy
 
-3. **App/gui/parameters/validation.py**:
-   - Simply imports validation functions from the core system
-   - Reuses the core validation system for consistency
-   - Doesn't implement any GUI-specific validation logic
+The system validates parameters at two levels:
 
-## Parameter Flow
+### Parameter Definition Validation
+- Ensures required fields are present
+- Validates default values meet constraints
+- Checks consistency in parameter metadata
 
-The current parameter flow is fragmented and not fully connected:
+### Parameter Value Validation
+- Type checking (float, int, string, enum)
+- Range validation (min/max)
+- Enum validation (valid values)
+- Custom validation rules
 
-1. **GUI Controls** update parameters in the GUI parameter registry
-2. These changes should propagate to the core `ParameterRegistry`
-3. The core registry should notify observers (including `AudioParameterObserver`)
-4. `AudioParameterObserver` should update the `AudioEngine`
-5. `AudioEngine` should apply parameters to the active processors
-
-However, there are disconnections in this flow:
-- GUI controls don't properly update the parameter registry
-- Changes don't consistently propagate between GUI and core
-- Observer notifications aren't always triggered correctly
-
-## Validation System
-
-The parameter validation system is designed to ensure parameters meet their defined constraints:
-
-1. **Type Validation**: Ensures parameters are of the correct type (float, int, string, etc.)
-2. **Range Validation**: Verifies numeric parameters are within their defined min/max range
-3. **Enum Validation**: Checks that enum parameters have valid values from their defined set
-
-The validation system was recently fixed to handle different implementations of `ParameterRange`:
-- Core implementation with `__call__` method
-- Dataclass implementation from parameter_builder.py
-- Dictionary representation with min/max values
-
-## Current Issues
-
-1. **Circular Dependencies**:
-   - `parameter_system.py` imports from GUI modules
-   - This creates circular dependencies that complicate the architecture
-
-2. **Duplicate Implementations**:
-   - Both core and GUI have their own parameter registry implementations
-   - This leads to inconsistencies and maintenance challenges
-
-3. **Disconnected Flow**:
-   - Parameter changes don't properly propagate through the system
-   - Observer pattern implementation is incomplete
-
-## Error Handling Strategy
-
-### Goals
-- Implement graceful error handling throughout the parameter system
-- Provide user-friendly error messages
-- Prevent application crashes from parameter errors
-- Log errors appropriately for debugging
-
-### Implementation Plan
-
-1. **Standardized Error Messages**
-   - Consistent formatting across all components
-   - Include parameter names in messages
-   - Provide actionable information for users
-   - Use appropriate severity levels
-
-2. **Exception Handling Hierarchy**
-   - Create custom exception types for different error categories:
-     * ParameterValidationError
-     * ParameterRangeError
-     * ParameterTypeError
-     * ParameterAccessError
-   - Implement proper exception propagation
-   - Add context information to exceptions
-   - Handle exceptions at appropriate levels
-
-3. **Validation Improvements**
-   - Centralize validation logic in validation.py
-   - Add pre-validation before parameter updates
-   - Implement input sanitization where appropriate
-   - Add boundary checking with graceful fallbacks
-
-4. **Recovery Mechanisms**
-   - Implement parameter rollback on failure
-   - Add state recovery for critical components
-   - Create fallback modes for essential features
-   - Ensure system stability after errors
-
-5. **User Feedback**
-   - Display meaningful error messages in the GUI
-   - Add visual indicators for invalid inputs
-   - Provide guidance on how to resolve issues
-   - Implement non-blocking error notifications
-
-## Future Improvements
-
-1. **Unified Parameter System**:
-   - Move all parameter system code to core
-   - Create proper interfaces for GUI to use
-   - Eliminate circular dependencies
-
-2. **Consistent Validation**:
-   - Centralize validation in one place
-   - Ensure all parameter access goes through validation
-
-3. **Complete Observer Pattern**:
-   - Ensure all parameter changes notify observers
-   - Implement proper update methods in all observers
-
-4. **Simplified API**:
-   - Create a clean, consistent API for parameter access
-   - Document the parameter flow for developers
-
-## Relationship to GUI
-
-The GUI interacts with the parameter system through:
-
-1. **Control Widgets**: Sliders, knobs, and other controls that modify parameters
-2. **Parameter Display**: UI elements that show current parameter values
-3. **Processor Selection**: UI for selecting different generators and filters
-
-The GUI should:
-1. Update the parameter registry when controls change
-2. Observe parameter changes to update the display
-3. Update processor selection in the audio engine
-
-Currently, these connections are incomplete or broken, which is a focus of the ongoing refactoring effort.
+All validation is centralized in the core parameter system to ensure consistency across the application.

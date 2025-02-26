@@ -1,7 +1,7 @@
 from App.core.audio.audio_engine import AudioEngine
 from App.core.audio.audio_stream import AudioStream
 from App.core.audio.audio_parameter_observer import AudioParameterObserver
-from App.core.parameters.parameter_registry import ParameterRegistry
+from App.core.parameters.parameter_system import ParameterSystem
 from App.core.processors.processor_registry import register_processors
 from App.core.processors.processor_factory import AudioProcessorFactory
 from App.gui.main_window import MainWindow
@@ -25,11 +25,16 @@ def main():
     register_processors()
     
     # Create components
-    # Initialize parameter registry and set default noise processor
-    param_registry = ParameterRegistry()
+    # Initialize parameter registry and register default noise processor
+    param_registry = ParameterSystem()
     noise_generators = AudioProcessorFactory.get_processors_by_category("noise")
     if noise_generators:
-        param_registry.set_processor_type(noise_generators[0].name)
+        processor = noise_generators[0]
+        processor_info = AudioProcessorFactory.get_processor_info(processor.name)
+        if processor_info:
+            param_registry.set_processor_type(processor.name)
+            for param_name, param_def in processor_info.parameters.items():
+                param_registry.register(param_name, param_def)
     audio_engine = AudioEngine()  # Uses default noise+bandpass config
     
     # Create and show main window first to have access to waveform view

@@ -1,34 +1,112 @@
-from App.core.parameters.parameter_builder import ParameterDefinitionBuilder as Param
-from App.core.parameters.base_registry import BaseParameterRegistry
+from App.core.parameters.parameter_system import ParameterSystem
 from typing import Dict, Any
 
 # Create registry instance
-common_parameter_registry = BaseParameterRegistry()
+common_parameter_registry = ParameterSystem()
 
 # Register common parameters
 COMMON_PARAMS = {
-    "volume": Param().float().default(0.5).range(0, 1).display("Volume").units("gain")
-        .control_type("slider").tooltip("Main output volume").step_size(0.01).build(),
-    
-    # Filter parameters
-    "cutoff": Param().float().default(0.5).range(0, 1).display("Filter Cutoff").units("normalized")
-        .control_type("slider").tooltip("Filter cutoff frequency").step_size(0.001).build(),
-    "resonance": Param().float().default(0.0).range(0, 1).display("Resonance")
-        .control_type("slider").tooltip("Filter resonance amount").step_size(0.01).build(),
-    "bandwidth": Param().float().default(0.5).range(0, 1).display("Bandwidth")
-        .control_type("slider").tooltip("Filter bandwidth").step_size(0.01).build(),
-    "poles": Param().int().default(1).range(1, 4).display("Poles")
-        .control_type("slider").tooltip("Number of filter poles").step_size(1).build(),
-    
-    # Fractal noise parameters
-    "octave_count": Param().int().default(4).range(4, 8).display("Octave Count")
-        .control_type("slider").tooltip("Number of noise octaves").step_size(1).build(),
-    "persistence": Param().float().default(0.5).range(0.5, 0.8).display("Persistence")
-        .control_type("slider").tooltip("Noise persistence").step_size(0.01).build(),
-    "lacunarity": Param().float().default(2.0).range(1.0, 4.0).display("Lacunarity")
-        .control_type("slider").tooltip("Noise lacunarity").step_size(0.1).build(),
-    "scale": Param().float().default(1.0).range(0.1, 10.0).display("Scale")
-        .control_type("slider").tooltip("Noise scale").step_size(0.1).build()
+    "volume": {
+        "default_value": 0.5,
+        "min_value": 0,
+        "max_value": 1,
+        "metadata": {
+            "display": "Volume",
+            "units": "gain",
+            "control_type": "slider",
+            "tooltip": "Main output volume",
+            "step_size": 0.01
+        }
+    },
+    "cutoff": {
+        "default_value": 0.5,
+        "min_value": 0,
+        "max_value": 1,
+        "metadata": {
+            "display": "Filter Cutoff",
+            "units": "normalized",
+            "control_type": "slider",
+            "tooltip": "Filter cutoff frequency",
+            "step_size": 0.001
+        }
+    },
+    "resonance": {
+        "default_value": 0.0,
+        "min_value": 0,
+        "max_value": 1,
+        "metadata": {
+            "display": "Resonance",
+            "control_type": "slider",
+            "tooltip": "Filter resonance amount",
+            "step_size": 0.01
+        }
+    },
+    "bandwidth": {
+        "default_value": 0.5,
+        "min_value": 0,
+        "max_value": 1,
+        "metadata": {
+            "display": "Bandwidth",
+            "control_type": "slider",
+            "tooltip": "Filter bandwidth",
+            "step_size": 0.01
+        }
+    },
+    "poles": {
+        "default_value": 1,
+        "min_value": 1,
+        "max_value": 4,
+        "metadata": {
+            "display": "Poles",
+            "control_type": "slider",
+            "tooltip": "Number of filter poles",
+            "step_size": 1
+        }
+    },
+    "octave_count": {
+        "default_value": 4,
+        "min_value": 4,
+        "max_value": 8,
+        "metadata": {
+            "display": "Octave Count",
+            "control_type": "slider",
+            "tooltip": "Number of noise octaves",
+            "step_size": 1
+        }
+    },
+    "persistence": {
+        "default_value": 0.5,
+        "min_value": 0.5,
+        "max_value": 0.8,
+        "metadata": {
+            "display": "Persistence",
+            "control_type": "slider",
+            "tooltip": "Noise persistence",
+            "step_size": 0.01
+        }
+    },
+    "lacunarity": {
+        "default_value": 2.0,
+        "min_value": 1.0,
+        "max_value": 4.0,
+        "metadata": {
+            "display": "Lacunarity",
+            "control_type": "slider",
+            "tooltip": "Noise lacunarity",
+            "step_size": 0.1
+        }
+    },
+    "scale": {
+        "default_value": 1.0,
+        "min_value": 0.1,
+        "max_value": 10.0,
+        "metadata": {
+            "display": "Scale",
+            "control_type": "slider",
+            "tooltip": "Noise scale",
+            "step_size": 0.1
+        }
+    }
 }
 
 # Register all common parameters
@@ -48,11 +126,13 @@ def get_params(*names: str) -> Dict[str, Any]:
     Raises:
         KeyError: If any requested parameter is not found
     """
-    result = common_parameter_registry.get_definition(*names)
-    
-    # If result is a single ParameterDefinition, convert it to a dictionary
-    if isinstance(result, dict):
-        return result
-    else:
-        # It's a single ParameterDefinition, convert to dict with name as key
-        return {result.name: result}
+    if not names:
+        return common_parameter_registry._parameter_definitions
+        
+    result = {}
+    for name in names:
+        if name not in common_parameter_registry._parameter_definitions:
+            raise KeyError(f"Parameter {name} not found")
+        result[name] = common_parameter_registry._parameter_definitions[name]
+        
+    return result
