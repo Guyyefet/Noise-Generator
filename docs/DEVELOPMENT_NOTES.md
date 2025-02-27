@@ -1,5 +1,57 @@
 # Noise Playground Development Notes
 
+## Parameter System Refactoring
+
+### New Architecture Overview
+The parameter system has been reorganized into logical components for better maintainability and extensibility. The new structure provides clear separation of concerns while maintaining the existing functionality.
+
+### Directory Structure
+- /core/parameters/base/ (Base classes and interfaces)
+- /core/parameters/management/ (Registry, builder, factory)
+- /core/parameters/validation/ (Validation system)
+- /core/parameters/notification/ (Observer pattern)
+- /core/parameters/metadata/ (Parameter metadata)
+- /core/parameters/implementations/ (Parameter implementations)
+
+### Migration Phases
+
+#### Phase 1: Base Components
+- Move core parameter classes to /base/
+- Update imports and references
+- Verify core functionality
+
+#### Phase 2: Management Components
+- Move registry, builder, and factory to /management/
+- Update parameter registration flow
+- Test parameter creation and management
+
+#### Phase 3: Validation System
+- Move validation logic to /validation/
+- Implement hierarchical validation structure
+- Update validation tests
+
+#### Phase 4: Notification System
+- Move observer pattern implementation to /notification/
+- Update notification handling
+- Verify parameter change notifications
+
+#### Phase 5: Metadata System
+- Move metadata handling to /metadata/
+- Update GUI bindings
+- Verify processor-specific bindings
+
+#### Phase 6: Implementation Migration
+- Move parameter implementations to /implementations/
+- Organize by parameter type
+- Update processor-specific parameters
+
+### Benefits of New Structure
+- Clear separation of concerns
+- Better code organization
+- Easier maintenance and extension
+- Improved type safety
+- More consistent parameter handling
+
 ## Audio Engine Architecture
 
 ### Design Patterns

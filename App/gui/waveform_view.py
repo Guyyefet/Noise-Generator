@@ -1,16 +1,17 @@
-from App.core.parameters.observer import Observer
+from App.core.parameters.notification.observer import ParameterObserver
 from App.core.visualization.implementations import *
+from App.core.parameters.management.registry import ParameterRegistry
 from PyQt6.QtWidgets import QWidget, QVBoxLayout
 from PyQt6.QtCore import QTimer
 import pyqtgraph as pg
 import numpy as np
 
-class WaveformView(QWidget, Observer):
+class WaveformView(QWidget, ParameterObserver):
     """Widget for displaying frequency domain analysis and filter response."""
     
     def __init__(self):
         QWidget.__init__(self)
-        Observer.__init__(self)
+        ParameterObserver.__init__(self)
         
         # Buffer for storing waveform data
         self.buffer_size = 2048

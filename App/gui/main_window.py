@@ -1,12 +1,12 @@
 from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout
-from App.core.parameters.parameter_system import ParameterSystem
+from App.core.parameters.management.registry import ParameterRegistry
 from App.gui.PyQt_gui import NoiseControlsWidget
 from App.gui.waveform_view import WaveformView
 
 class MainWindow(QMainWindow):
     """Main application window."""
     
-    def __init__(self, parameter_system: ParameterSystem):
+    def __init__(self, param_registry: ParameterRegistry):
         super().__init__()
         self.setWindowTitle("Noise Playground")
         self.resize(800, 600)
@@ -21,13 +21,14 @@ class MainWindow(QMainWindow):
         left_layout = QVBoxLayout(left_panel)
         
         # Add noise controls
-        controls = NoiseControlsWidget(parameter_system)
+        controls = NoiseControlsWidget(param_registry)
         left_layout.addWidget(controls)
         left_layout.addStretch()  # Push controls to top
         
         # Create waveform view and register as observer
         self.waveform_view = WaveformView()
-        parameter_system.attach(self.waveform_view)
+        for param in param_registry.get_all():
+            param.attach(self.waveform_view)
         
         # Add widgets to main layout
         main_layout.addWidget(left_panel, stretch=1)  # Controls take 1/4 of width

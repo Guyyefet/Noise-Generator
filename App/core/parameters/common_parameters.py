@@ -1,138 +1,37 @@
-from App.core.parameters.parameter_system import ParameterSystem
-from typing import Dict, Any
+from App.core.parameters.management.registry import ParameterRegistry
+from App.core.parameters.management.builder import ParameterDefinitionBuilder as Param
 
-# Create registry instance
-common_parameter_registry = ParameterSystem()
-
-# Register common parameters
-COMMON_PARAMS = {
-    "volume": {
-        "default_value": 0.5,
-        "min_value": 0,
-        "max_value": 1,
-        "metadata": {
-            "display": "Volume",
-            "units": "gain",
-            "control_type": "slider",
-            "tooltip": "Main output volume",
-            "step_size": 0.01
-        }
-    },
-    "cutoff": {
-        "default_value": 0.5,
-        "min_value": 0,
-        "max_value": 1,
-        "metadata": {
-            "display": "Filter Cutoff",
-            "units": "normalized",
-            "control_type": "slider",
-            "tooltip": "Filter cutoff frequency",
-            "step_size": 0.001
-        }
-    },
-    "resonance": {
-        "default_value": 0.0,
-        "min_value": 0,
-        "max_value": 1,
-        "metadata": {
-            "display": "Resonance",
-            "control_type": "slider",
-            "tooltip": "Filter resonance amount",
-            "step_size": 0.01
-        }
-    },
-    "bandwidth": {
-        "default_value": 0.5,
-        "min_value": 0,
-        "max_value": 1,
-        "metadata": {
-            "display": "Bandwidth",
-            "control_type": "slider",
-            "tooltip": "Filter bandwidth",
-            "step_size": 0.01
-        }
-    },
-    "poles": {
-        "default_value": 1,
-        "min_value": 1,
-        "max_value": 4,
-        "metadata": {
-            "display": "Poles",
-            "control_type": "slider",
-            "tooltip": "Number of filter poles",
-            "step_size": 1
-        }
-    },
-    "octave_count": {
-        "default_value": 4,
-        "min_value": 4,
-        "max_value": 8,
-        "metadata": {
-            "display": "Octave Count",
-            "control_type": "slider",
-            "tooltip": "Number of noise octaves",
-            "step_size": 1
-        }
-    },
-    "persistence": {
-        "default_value": 0.5,
-        "min_value": 0.5,
-        "max_value": 0.8,
-        "metadata": {
-            "display": "Persistence",
-            "control_type": "slider",
-            "tooltip": "Noise persistence",
-            "step_size": 0.01
-        }
-    },
-    "lacunarity": {
-        "default_value": 2.0,
-        "min_value": 1.0,
-        "max_value": 4.0,
-        "metadata": {
-            "display": "Lacunarity",
-            "control_type": "slider",
-            "tooltip": "Noise lacunarity",
-            "step_size": 0.1
-        }
-    },
-    "scale": {
-        "default_value": 1.0,
-        "min_value": 0.1,
-        "max_value": 10.0,
-        "metadata": {
-            "display": "Scale",
-            "control_type": "slider",
-            "tooltip": "Noise scale",
-            "step_size": 0.1
-        }
-    }
-}
-
-# Register all common parameters
-for name, param in COMMON_PARAMS.items():
-    common_parameter_registry.register(name, param)
-
-def get_params(*names: str) -> Dict[str, Any]:
-    """Get common parameter definitions by name(s).
+class CommonParameters:
+    """Class containing common audio parameters"""
     
-    Args:
-        *names: Names of parameters to retrieve. If no names provided,
-                returns all definitions.
-                
-    Returns:
-        Dictionary of parameter definitions.
+    def __init__(self):
+        self.registry = ParameterRegistry()
         
-    Raises:
-        KeyError: If any requested parameter is not found
-    """
-    if not names:
-        return common_parameter_registry._parameter_definitions
-        
-    result = {}
-    for name in names:
-        if name not in common_parameter_registry._parameter_definitions:
-            raise KeyError(f"Parameter {name} not found")
-        result[name] = common_parameter_registry._parameter_definitions[name]
-        
-    return result
+    def add_parameter(self, parameter):
+        """Add a parameter to the common parameters registry"""
+        self.registry.register(parameter)
+
+def get_params(*param_names):
+    """Get a dictionary of common parameters by name"""
+    params = {
+        "volume": Param().float().min(0.0).max(1.0).default(0.5).step(0.01)
+            .display("Volume").unit("").build(),
+        "cutoff": Param().float().min(20.0).max(20000.0).default(1000.0).step(1.0)
+            .display("Cutoff").unit("Hz").build(),
+        "bandwidth": Param().float().min(0.1).max(5.0).default(1.0).step(0.1)
+            .display("Bandwidth").unit("oct").build(),
+        "resonance": Param().float().min(0.0).max(1.0).default(0.5).step(0.01)
+            .display("Resonance").unit("").build(),
+        "poles": Param().int().min(1).max(8).default(4).step(1)
+            .display("Poles").unit("").build(),
+        "octave_count": Param().int().min(1).max(16).default(8).step(1)
+            .display("Octaves").unit("").build(),
+        "persistence": Param().float().min(0.0).max(1.0).default(0.5).step(0.01)
+            .display("Persistence").unit("").build(),
+        "lacunarity": Param().float().min(1.0).max(4.0).default(2.0).step(0.1)
+            .display("Lacunarity").unit("").build(),
+        "scale": Param().float().min(0.01).max(10.0).default(1.0).step(0.01)
+            .display("Scale").unit("").build()
+    }
+    
+    return {name: params[name] for name in param_names}
